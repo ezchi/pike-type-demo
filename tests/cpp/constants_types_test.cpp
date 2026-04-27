@@ -4,7 +4,7 @@
 #include <vector>
 #include <stdexcept>
 
-using namespace alpha::constants;
+using namespace foo::bar::constants;
 
 void test_constants() {
   std::cout << "Testing constants..." << std::endl;
@@ -37,8 +37,8 @@ void test_addr_ct() {
   // to_bytes / from_bytes
   auto bytes = addr.to_bytes();
   assert(bytes.size() == 2);
-  assert(bytes[0] == (1234 & 0xFF));
-  assert(bytes[1] == (1234 >> 8));
+  assert(bytes[0] == (1234 >> 8));
+  assert(bytes[1] == (1234 & 0xFF));
 
   addr_ct addr2;
   addr2.from_bytes(bytes);
@@ -118,28 +118,23 @@ void test_big_data_ct() {
 void test_header_ct() {
   std::cout << "Testing header_ct..." << std::endl;
   header_ct h;
-  h.addr = addr_ct(0x1ABC); // 13 bits: 1 1010 1011 1100
+  h.addr = addr_ct(0x1ABC);
   h.enable = flag_ct(1);
+  // data defaults to all zeros (9 bytes)
 
-  // Packing:
-  // bit_offset = 14
-  // bit_offset -= 13 -> 1. addr packed at [1, 13]
-  // bit_offset -= 1  -> 0. enable packed at [0, 0]
-  // Total 14 bits.
-  // byte 0: [addr[6:0], enable]
-  // byte 1: [00, addr[12:7]]
-
+  // Byte layout: addr(2) | enable(1) | data(9) = 12 bytes
   auto bytes = h.to_bytes();
-  assert(bytes.size() == 2);
-  
-  // addr = 0x1ABC = 0b 1 1010 1011 1100
-  // LSB 7 bits of addr: 011 1100 = 0x3C
-  // byte 0 = (0x3C << 1) | 1 = 0x78 | 1 = 0x79
-  assert(bytes[0] == 0x79);
+  assert(bytes.size() == 12);
 
-  // upper 6 bits of addr: 1 1010 1 = 0b110101 = 0x35
-  // byte 1 = 0x35
-  assert(bytes[1] == 0x35);
+  // addr big-endian: 0x1ABC -> [0x1A, 0xBC]
+  assert(bytes[0] == 0x1A);
+  assert(bytes[1] == 0xBC);
+  // enable: 1
+  assert(bytes[2] == 1);
+  // data: all zeros
+  for (std::size_t i = 3; i < 12; ++i) {
+    assert(bytes[i] == 0);
+  }
 
   header_ct h2;
   h2.from_bytes(bytes);
@@ -155,14 +150,11 @@ void test_packet_ct() {
   p.header.enable = flag_ct(0);
   p.mode = 2;
   p.error_code = 5;
+  // data1, data2 default to 0
 
-  // kWidth = 19
-  // header: 14 bits at [5, 18]
-  // mode: 2 bits at [3, 4]
-  // error_code: 3 bits at [0, 2]
-
+  // Byte layout: header(12) | mode(1) | error_code(1) | data1(4) | data2(4) = 22 bytes
   auto bytes = p.to_bytes();
-  assert(bytes.size() == 3);
+  assert(bytes.size() == 22);
 
   packet_ct p2;
   p2.from_bytes(bytes);
@@ -170,6 +162,8 @@ void test_packet_ct() {
   assert(p2.header.enable.value == 0);
   assert(p2.mode == 2);
   assert(p2.error_code == 5);
+  assert(p2.data1 == 0);
+  assert(p2.data2 == 0);
   assert(p == p2);
 
   // Validation
