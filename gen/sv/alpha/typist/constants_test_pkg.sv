@@ -6,8 +6,8 @@ package constants_test_pkg;
   import constants_pkg::*;
 
   class addr_ct;
-    localparam int WIDTH = W;
-    localparam int BYTE_COUNT = 2;
+    localparam int WIDTH = LP_ADDR_WIDTH;
+    localparam int BYTE_COUNT = LP_ADDR_BYTE_COUNT;
     rand addr_t value;
   
     function new(addr_t value_in = '0);
@@ -23,25 +23,25 @@ package constants_test_pkg;
     endfunction
   
     task automatic to_bytes(output byte unsigned bytes[]);
-      bit [BYTE_COUNT*8-1:0] packed_bits;
+      logic [15:0] padded;
       bytes = new[BYTE_COUNT];
-      packed_bits = '0;
-      packed_bits[WIDTH-1:0] = value;
+      padded = '0;
+      padded[WIDTH-1:0] = value;
       for (int idx = 0; idx < BYTE_COUNT; idx++) begin
-        bytes[idx] = packed_bits[idx*8 +: 8];
+        bytes[idx] = padded[(BYTE_COUNT - 1 - idx)*8 +: 8];
       end
     endtask
   
     function void from_bytes(input byte unsigned bytes[]);
-      bit [BYTE_COUNT*8-1:0] packed_bits;
+      logic [15:0] padded;
       if (bytes.size() != BYTE_COUNT) begin
         $fatal(1, "addr_ct.from_bytes size mismatch: expected %0d got %0d", BYTE_COUNT, bytes.size());
       end
-      packed_bits = '0;
+      padded = '0;
       for (int idx = 0; idx < BYTE_COUNT; idx++) begin
-        packed_bits[idx*8 +: 8] = bytes[idx];
+        padded[(BYTE_COUNT - 1 - idx)*8 +: 8] = bytes[idx];
       end
-      value = addr_t'(packed_bits[WIDTH-1:0]);
+      value = addr_t'(padded[WIDTH-1:0]);
     endfunction
   
     function void copy(input addr_ct rhs);
@@ -64,8 +64,8 @@ package constants_test_pkg;
   endclass : addr_ct
 
   class mask_ct;
-    localparam int WIDTH = 8;
-    localparam int BYTE_COUNT = 1;
+    localparam int WIDTH = LP_MASK_WIDTH;
+    localparam int BYTE_COUNT = LP_MASK_BYTE_COUNT;
     rand mask_t value;
   
     function new(mask_t value_in = '0);
@@ -81,25 +81,25 @@ package constants_test_pkg;
     endfunction
   
     task automatic to_bytes(output byte unsigned bytes[]);
-      bit [BYTE_COUNT*8-1:0] packed_bits;
+      logic [7:0] padded;
       bytes = new[BYTE_COUNT];
-      packed_bits = '0;
-      packed_bits[WIDTH-1:0] = value;
+      padded = '0;
+      padded[WIDTH-1:0] = value;
       for (int idx = 0; idx < BYTE_COUNT; idx++) begin
-        bytes[idx] = packed_bits[idx*8 +: 8];
+        bytes[idx] = padded[(BYTE_COUNT - 1 - idx)*8 +: 8];
       end
     endtask
   
     function void from_bytes(input byte unsigned bytes[]);
-      bit [BYTE_COUNT*8-1:0] packed_bits;
+      logic [7:0] padded;
       if (bytes.size() != BYTE_COUNT) begin
         $fatal(1, "mask_ct.from_bytes size mismatch: expected %0d got %0d", BYTE_COUNT, bytes.size());
       end
-      packed_bits = '0;
+      padded = '0;
       for (int idx = 0; idx < BYTE_COUNT; idx++) begin
-        packed_bits[idx*8 +: 8] = bytes[idx];
+        padded[(BYTE_COUNT - 1 - idx)*8 +: 8] = bytes[idx];
       end
-      value = mask_t'(packed_bits[WIDTH-1:0]);
+      value = mask_t'(padded[WIDTH-1:0]);
     endfunction
   
     function void copy(input mask_ct rhs);
@@ -122,8 +122,8 @@ package constants_test_pkg;
   endclass : mask_ct
 
   class flag_ct;
-    localparam int WIDTH = 1;
-    localparam int BYTE_COUNT = 1;
+    localparam int WIDTH = LP_FLAG_WIDTH;
+    localparam int BYTE_COUNT = LP_FLAG_BYTE_COUNT;
     rand flag_t value;
   
     function new(flag_t value_in = '0);
@@ -139,25 +139,25 @@ package constants_test_pkg;
     endfunction
   
     task automatic to_bytes(output byte unsigned bytes[]);
-      bit [BYTE_COUNT*8-1:0] packed_bits;
+      logic [7:0] padded;
       bytes = new[BYTE_COUNT];
-      packed_bits = '0;
-      packed_bits[WIDTH-1:0] = value;
+      padded = '0;
+      padded[WIDTH-1:0] = value;
       for (int idx = 0; idx < BYTE_COUNT; idx++) begin
-        bytes[idx] = packed_bits[idx*8 +: 8];
+        bytes[idx] = padded[(BYTE_COUNT - 1 - idx)*8 +: 8];
       end
     endtask
   
     function void from_bytes(input byte unsigned bytes[]);
-      bit [BYTE_COUNT*8-1:0] packed_bits;
+      logic [7:0] padded;
       if (bytes.size() != BYTE_COUNT) begin
         $fatal(1, "flag_ct.from_bytes size mismatch: expected %0d got %0d", BYTE_COUNT, bytes.size());
       end
-      packed_bits = '0;
+      padded = '0;
       for (int idx = 0; idx < BYTE_COUNT; idx++) begin
-        packed_bits[idx*8 +: 8] = bytes[idx];
+        padded[(BYTE_COUNT - 1 - idx)*8 +: 8] = bytes[idx];
       end
-      value = flag_t'(packed_bits[WIDTH-1:0]);
+      value = flag_t'(padded[WIDTH-1:0]);
     endfunction
   
     function void copy(input flag_ct rhs);
@@ -180,8 +180,8 @@ package constants_test_pkg;
   endclass : flag_ct
 
   class big_data_ct;
-    localparam int WIDTH = 67;
-    localparam int BYTE_COUNT = 9;
+    localparam int WIDTH = LP_BIG_DATA_WIDTH;
+    localparam int BYTE_COUNT = LP_BIG_DATA_BYTE_COUNT;
     rand big_data_t value;
   
     function new(big_data_t value_in = '0);
@@ -197,25 +197,25 @@ package constants_test_pkg;
     endfunction
   
     task automatic to_bytes(output byte unsigned bytes[]);
-      bit [BYTE_COUNT*8-1:0] packed_bits;
+      logic [71:0] padded;
       bytes = new[BYTE_COUNT];
-      packed_bits = '0;
-      packed_bits[WIDTH-1:0] = value;
+      padded = '0;
+      padded[WIDTH-1:0] = value;
       for (int idx = 0; idx < BYTE_COUNT; idx++) begin
-        bytes[idx] = packed_bits[idx*8 +: 8];
+        bytes[idx] = padded[(BYTE_COUNT - 1 - idx)*8 +: 8];
       end
     endtask
   
     function void from_bytes(input byte unsigned bytes[]);
-      bit [BYTE_COUNT*8-1:0] packed_bits;
+      logic [71:0] padded;
       if (bytes.size() != BYTE_COUNT) begin
         $fatal(1, "big_data_ct.from_bytes size mismatch: expected %0d got %0d", BYTE_COUNT, bytes.size());
       end
-      packed_bits = '0;
+      padded = '0;
       for (int idx = 0; idx < BYTE_COUNT; idx++) begin
-        packed_bits[idx*8 +: 8] = bytes[idx];
+        padded[(BYTE_COUNT - 1 - idx)*8 +: 8] = bytes[idx];
       end
-      value = big_data_t'(packed_bits[WIDTH-1:0]);
+      value = big_data_t'(padded[WIDTH-1:0]);
     endfunction
   
     function void copy(input big_data_ct rhs);
@@ -236,4 +236,265 @@ package constants_test_pkg;
       return $sformatf("big_data_ct(value=0x%0h)", value);
     endfunction
   endclass : big_data_ct
+
+  class header_ct;
+    localparam int WIDTH = LP_HEADER_WIDTH;
+    localparam int BYTE_COUNT = LP_HEADER_BYTE_COUNT;
+    rand addr_t addr;
+    rand flag_t enable;
+    rand big_data_t data;
+  
+    function new();
+      addr = '0;
+      enable = '0;
+      data = '0;
+    endfunction
+  
+    function automatic header_t to_slv();
+      header_t packed_value;
+      packed_value.addr = addr;
+      packed_value.addr_pad = '0;
+      packed_value.enable = enable;
+      packed_value.enable_pad = '0;
+      packed_value.data = data;
+      packed_value.data_pad = '0;
+      return packed_value;
+    endfunction
+  
+    function void from_slv(header_t value_in);
+      addr = value_in.addr;
+      enable = value_in.enable;
+      data = value_in.data;
+    endfunction
+  
+    task automatic to_bytes(output byte unsigned bytes[]);
+      int byte_idx;
+      bytes = new[BYTE_COUNT];
+      byte_idx = 0;
+      begin
+        logic [15:0] fb;
+        fb = '0;
+        fb[12:0] = addr;
+        for (int i = 0; i < 2; i++) bytes[byte_idx + i] = fb[(2 - 1 - i)*8 +: 8];
+        byte_idx += 2;
+      end
+      begin
+        logic [7:0] fb;
+        fb = '0;
+        fb[0:0] = enable;
+        for (int i = 0; i < 1; i++) bytes[byte_idx + i] = fb[(1 - 1 - i)*8 +: 8];
+        byte_idx += 1;
+      end
+      begin
+        logic [71:0] fb;
+        fb = '0;
+        fb[66:0] = data;
+        for (int i = 0; i < 9; i++) bytes[byte_idx + i] = fb[(9 - 1 - i)*8 +: 8];
+        byte_idx += 9;
+      end
+    endtask
+  
+    function void from_bytes(input byte unsigned bytes[]);
+      int byte_idx;
+      if (bytes.size() != BYTE_COUNT) begin
+        $fatal(1, "header_ct.from_bytes size mismatch: expected %0d got %0d", BYTE_COUNT, bytes.size());
+      end
+      byte_idx = 0;
+      begin
+        logic [15:0] fb;
+        fb = '0;
+        for (int i = 0; i < 2; i++) fb[(2 - 1 - i)*8 +: 8] = bytes[byte_idx + i];
+        addr = fb[12:0];
+        byte_idx += 2;
+      end
+      begin
+        logic [7:0] fb;
+        fb = '0;
+        for (int i = 0; i < 1; i++) fb[(1 - 1 - i)*8 +: 8] = bytes[byte_idx + i];
+        enable = fb[0:0];
+        byte_idx += 1;
+      end
+      begin
+        logic [71:0] fb;
+        fb = '0;
+        for (int i = 0; i < 9; i++) fb[(9 - 1 - i)*8 +: 8] = bytes[byte_idx + i];
+        data = fb[66:0];
+        byte_idx += 9;
+      end
+    endfunction
+  
+    function void copy(input header_ct rhs);
+      addr = rhs.addr;
+      enable = rhs.enable;
+      data = rhs.data;
+    endfunction
+  
+    function automatic header_ct clone();
+      header_ct cloned = new();
+      cloned.copy(this);
+      return cloned;
+    endfunction
+  
+    function automatic bit compare(input header_ct rhs);
+      bit match;
+      match = 1'b1;
+      match &= (addr === rhs.addr);
+      match &= (enable === rhs.enable);
+      match &= (data === rhs.data);
+      return match;
+    endfunction
+  
+    function automatic string sprint();
+      return $sformatf("header_ct(addr=0x%0h, enable=0x%0h, data=0x%0h)", addr, enable, data);
+    endfunction
+  endclass : header_ct
+
+  class packet_ct;
+    localparam int WIDTH = LP_PACKET_WIDTH;
+    localparam int BYTE_COUNT = LP_PACKET_BYTE_COUNT;
+    header_ct header;
+    rand logic [1:0] mode;
+    rand bit [2:0] error_code;
+    rand logic [31:0] data1;
+    rand logic [31:0] data2;
+  
+    function new();
+      header = new();
+      mode = '0;
+      error_code = '0;
+      data1 = '0;
+      data2 = '0;
+    endfunction
+  
+    function automatic packet_t to_slv();
+      packet_t packed_value;
+      packed_value.header = header.to_slv();
+      packed_value.mode = mode;
+      packed_value.mode_pad = '0;
+      packed_value.error_code = error_code;
+      packed_value.error_code_pad = '0;
+      packed_value.data1 = data1;
+      packed_value.data2 = data2;
+      return packed_value;
+    endfunction
+  
+    function void from_slv(packet_t value_in);
+      header.from_slv(value_in.header);
+      mode = value_in.mode;
+      error_code = value_in.error_code;
+      data1 = value_in.data1;
+      data2 = value_in.data2;
+    endfunction
+  
+    task automatic to_bytes(output byte unsigned bytes[]);
+      int byte_idx;
+      bytes = new[BYTE_COUNT];
+      byte_idx = 0;
+      begin
+        byte unsigned field_bytes[];
+        header.to_bytes(field_bytes);
+        for (int i = 0; i < 12; i++) bytes[byte_idx + i] = field_bytes[i];
+        byte_idx += 12;
+      end
+      begin
+        logic [7:0] fb;
+        fb = '0;
+        fb[1:0] = mode;
+        for (int i = 0; i < 1; i++) bytes[byte_idx + i] = fb[(1 - 1 - i)*8 +: 8];
+        byte_idx += 1;
+      end
+      begin
+        logic [7:0] fb;
+        fb = '0;
+        fb[2:0] = error_code;
+        for (int i = 0; i < 1; i++) bytes[byte_idx + i] = fb[(1 - 1 - i)*8 +: 8];
+        byte_idx += 1;
+      end
+      begin
+        logic [31:0] fb;
+        fb = '0;
+        fb[31:0] = data1;
+        for (int i = 0; i < 4; i++) bytes[byte_idx + i] = fb[(4 - 1 - i)*8 +: 8];
+        byte_idx += 4;
+      end
+      begin
+        logic [31:0] fb;
+        fb = '0;
+        fb[31:0] = data2;
+        for (int i = 0; i < 4; i++) bytes[byte_idx + i] = fb[(4 - 1 - i)*8 +: 8];
+        byte_idx += 4;
+      end
+    endtask
+  
+    function void from_bytes(input byte unsigned bytes[]);
+      int byte_idx;
+      if (bytes.size() != BYTE_COUNT) begin
+        $fatal(1, "packet_ct.from_bytes size mismatch: expected %0d got %0d", BYTE_COUNT, bytes.size());
+      end
+      byte_idx = 0;
+      begin
+        byte unsigned field_bytes[] = new[12];
+        for (int i = 0; i < 12; i++) field_bytes[i] = bytes[byte_idx + i];
+        header.from_bytes(field_bytes);
+        byte_idx += 12;
+      end
+      begin
+        logic [7:0] fb;
+        fb = '0;
+        for (int i = 0; i < 1; i++) fb[(1 - 1 - i)*8 +: 8] = bytes[byte_idx + i];
+        mode = fb[1:0];
+        byte_idx += 1;
+      end
+      begin
+        logic [7:0] fb;
+        fb = '0;
+        for (int i = 0; i < 1; i++) fb[(1 - 1 - i)*8 +: 8] = bytes[byte_idx + i];
+        error_code = fb[2:0];
+        byte_idx += 1;
+      end
+      begin
+        logic [31:0] fb;
+        fb = '0;
+        for (int i = 0; i < 4; i++) fb[(4 - 1 - i)*8 +: 8] = bytes[byte_idx + i];
+        data1 = fb[31:0];
+        byte_idx += 4;
+      end
+      begin
+        logic [31:0] fb;
+        fb = '0;
+        for (int i = 0; i < 4; i++) fb[(4 - 1 - i)*8 +: 8] = bytes[byte_idx + i];
+        data2 = fb[31:0];
+        byte_idx += 4;
+      end
+    endfunction
+  
+    function void copy(input packet_ct rhs);
+      header.copy(rhs.header);
+      mode = rhs.mode;
+      error_code = rhs.error_code;
+      data1 = rhs.data1;
+      data2 = rhs.data2;
+    endfunction
+  
+    function automatic packet_ct clone();
+      packet_ct cloned = new();
+      cloned.copy(this);
+      return cloned;
+    endfunction
+  
+    function automatic bit compare(input packet_ct rhs);
+      bit match;
+      match = 1'b1;
+      match &= header.compare(rhs.header);
+      match &= (mode === rhs.mode);
+      match &= (error_code === rhs.error_code);
+      match &= (data1 === rhs.data1);
+      match &= (data2 === rhs.data2);
+      return match;
+    endfunction
+  
+    function automatic string sprint();
+      return $sformatf("packet_ct(header=%s, mode=0x%0h, error_code=0x%0h, data1=0x%0h, data2=0x%0h)", header.sprint(), mode, error_code, data1, data2);
+    endfunction
+  endclass : packet_ct
 endpackage

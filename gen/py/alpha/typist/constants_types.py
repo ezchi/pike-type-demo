@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
+
 FOO = 100000
 BAR = 0
 A = 3
@@ -27,8 +29,15 @@ class addr_ct:
             raise ValueError("addr_ct value out of range")
         self.value = value
 
+    def _to_packed_int(self) -> int:
+        return self.value
+
+    @classmethod
+    def _from_packed_int(cls, packed: int) -> "addr_ct":
+        return cls(packed)
+
     def to_bytes(self) -> bytes:
-        return self.value.to_bytes(self.BYTE_COUNT, "little", signed=False)
+        return self.value.to_bytes(self.BYTE_COUNT, "big", signed=False)
 
     @classmethod
     def from_bytes(cls, data: bytes | bytearray) -> "addr_ct":
@@ -37,7 +46,8 @@ class addr_ct:
         raw = bytes(data)
         if len(raw) != cls.BYTE_COUNT:
             raise ValueError("addr_ct.from_bytes size mismatch")
-        return cls(int.from_bytes(raw, "little", signed=False))
+        value = int.from_bytes(raw, "big", signed=False) & cls.MAX_VALUE
+        return cls(value)
 
     def clone(self) -> "addr_ct":
         return type(self)(self.value)
@@ -74,8 +84,21 @@ class mask_ct:
             raise ValueError("mask_ct value out of range")
         self.value = value
 
+    def _to_packed_int(self) -> int:
+        return self.value & self.MASK
+
+    @classmethod
+    def _from_packed_int(cls, packed: int) -> "mask_ct":
+        value = packed & cls.MASK
+        signed_value = value - (1 << cls.WIDTH) if (value & cls.SIGN_BIT) else value
+        return cls(signed_value)
+
     def to_bytes(self) -> bytes:
-        return (self.value & self.MASK).to_bytes(self.BYTE_COUNT, "little", signed=False)
+        mask = self.MASK
+        packed = self.value & mask
+        if self.value < 0:
+            packed |= ((1 << (self.BYTE_COUNT * 8)) - 1) ^ mask
+        return packed.to_bytes(self.BYTE_COUNT, "big", signed=False)
 
     @classmethod
     def from_bytes(cls, data: bytes | bytearray) -> "mask_ct":
@@ -84,11 +107,14 @@ class mask_ct:
         raw = bytes(data)
         if len(raw) != cls.BYTE_COUNT:
             raise ValueError("mask_ct.from_bytes size mismatch")
-        value = int.from_bytes(raw, "little", signed=False)
-        if value > cls.MASK:
-            raise ValueError("mask_ct.from_bytes value out of range")
-        signed_value = value - (1 << cls.WIDTH) if (value & cls.SIGN_BIT) else value
-        return cls(signed_value)
+        raw_int = int.from_bytes(raw, "big", signed=False)
+        data_bits = raw_int & cls.MASK
+        padding = raw_int >> cls.WIDTH
+        sign_bit = (data_bits >> (cls.WIDTH - 1)) & 1
+        expected_padding = ((1 << 0) - 1) if sign_bit else 0
+        if padding != expected_padding:
+            raise ValueError("mask_ct.from_bytes signed padding mismatch")
+        return cls._from_packed_int(data_bits)
 
     def clone(self) -> "mask_ct":
         return type(self)(self.value)
@@ -123,8 +149,15 @@ class flag_ct:
             raise ValueError("flag_ct value out of range")
         self.value = value
 
+    def _to_packed_int(self) -> int:
+        return self.value
+
+    @classmethod
+    def _from_packed_int(cls, packed: int) -> "flag_ct":
+        return cls(packed)
+
     def to_bytes(self) -> bytes:
-        return self.value.to_bytes(self.BYTE_COUNT, "little", signed=False)
+        return self.value.to_bytes(self.BYTE_COUNT, "big", signed=False)
 
     @classmethod
     def from_bytes(cls, data: bytes | bytearray) -> "flag_ct":
@@ -133,7 +166,8 @@ class flag_ct:
         raw = bytes(data)
         if len(raw) != cls.BYTE_COUNT:
             raise ValueError("flag_ct.from_bytes size mismatch")
-        return cls(int.from_bytes(raw, "little", signed=False))
+        value = int.from_bytes(raw, "big", signed=False) & cls.MAX_VALUE
+        return cls(value)
 
     def clone(self) -> "flag_ct":
         return type(self)(self.value)
@@ -164,7 +198,7 @@ class big_data_ct:
         if isinstance(value, int):
             if value < 0 or value > self.MAX_VALUE:
                 raise ValueError("big_data_ct value out of range")
-            self.value = value.to_bytes(self.BYTE_COUNT, "little", signed=False)
+            self.value = value.to_bytes(self.BYTE_COUNT, "big", signed=False)
             return
         if not isinstance(value, (bytes, bytearray)):
             raise TypeError("big_data_ct value must be bytes, bytearray, or int")
@@ -175,6 +209,13 @@ class big_data_ct:
             raise ValueError("big_data_ct value size mismatch")
         self.value = raw
 
+    def _to_packed_int(self) -> int:
+        return int.from_bytes(self.value, "big", signed=False)
+
+    @classmethod
+    def _from_packed_int(cls, packed: int) -> "big_data_ct":
+        return cls(packed.to_bytes(cls.BYTE_COUNT, "big", signed=False))
+
     def to_bytes(self) -> bytes:
         return self.value
 
@@ -182,7 +223,12 @@ class big_data_ct:
     def from_bytes(cls, data: bytes | bytearray) -> "big_data_ct":
         if not isinstance(data, (bytes, bytearray)):
             raise TypeError("big_data_ct.from_bytes expects bytes or bytearray")
-        return cls(bytes(data))
+        raw = bytes(data)
+        if len(raw) != cls.BYTE_COUNT:
+            raise ValueError("big_data_ct.from_bytes size mismatch")
+        # Mask padding bits in MSB byte
+        masked = bytes([raw[0] & 7]) + raw[1:]
+        return cls(masked)
 
     def clone(self) -> "big_data_ct":
         return type(self)(self.value)
@@ -196,3 +242,167 @@ class big_data_ct:
 
     def __repr__(self) -> str:
         return f"big_data_ct(value={self.value!r})"
+
+@dataclass
+class header_ct:
+    WIDTH = 81
+    BYTE_COUNT = 12
+    addr: addr_ct = field(default_factory=addr_ct)
+    enable: flag_ct = field(default_factory=flag_ct)
+    data: big_data_ct = field(default_factory=big_data_ct)
+
+    def __setattr__(self, name: str, value: object) -> None:
+        if name == "addr":
+            value = self._coerce_addr(value)
+        elif name == "enable":
+            value = self._coerce_enable(value)
+        elif name == "data":
+            value = self._coerce_data(value)
+        super().__setattr__(name, value)
+
+    @staticmethod
+    def _coerce_addr(value: object) -> addr_ct:
+        if isinstance(value, addr_ct):
+            return value
+        return addr_ct(value)
+
+    @staticmethod
+    def _coerce_enable(value: object) -> flag_ct:
+        if isinstance(value, flag_ct):
+            return value
+        return flag_ct(value)
+
+    @staticmethod
+    def _coerce_data(value: object) -> big_data_ct:
+        if isinstance(value, big_data_ct):
+            return value
+        return big_data_ct(value)
+
+    def to_bytes(self) -> bytes:
+        result = bytearray()
+        result.extend(self.addr.to_bytes())
+        result.extend(self.enable.to_bytes())
+        result.extend(self.data.to_bytes())
+        return bytes(result)
+
+    @classmethod
+    def from_bytes(cls, data: bytes | bytearray) -> "header_ct":
+        if not isinstance(data, (bytes, bytearray)):
+            raise TypeError("header_ct.from_bytes expects bytes or bytearray")
+        raw = bytes(data)
+        if len(raw) != cls.BYTE_COUNT:
+            raise ValueError("header_ct.from_bytes size mismatch")
+        obj = cls()
+        offset = 0
+        obj.addr = addr_ct.from_bytes(raw[offset:offset + 2])
+        offset += 2
+        obj.enable = flag_ct.from_bytes(raw[offset:offset + 1])
+        offset += 1
+        obj.data = big_data_ct.from_bytes(raw[offset:offset + 9])
+        offset += 9
+        return obj
+
+    def clone(self) -> "header_ct":
+        return type(self).from_bytes(self.to_bytes())
+
+@dataclass
+class packet_ct:
+    WIDTH = 150
+    BYTE_COUNT = 22
+    header: header_ct | None = field(default_factory=header_ct)
+    mode: int = 0
+    error_code: int = 0
+    data1: int = 0
+    data2: int = 0
+
+    def __setattr__(self, name: str, value: object) -> None:
+        if name == "header":
+            value = self._coerce_header(value)
+        elif name == "mode":
+            value = self._coerce_mode(value)
+        elif name == "error_code":
+            value = self._coerce_error_code(value)
+        elif name == "data1":
+            value = self._coerce_data1(value)
+        elif name == "data2":
+            value = self._coerce_data2(value)
+        super().__setattr__(name, value)
+
+    @staticmethod
+    def _coerce_header(value: object) -> header_ct | None:
+        if value is None:
+            return None
+        if isinstance(value, header_ct):
+            return value
+        raise TypeError("packet_ct.header must be header_ct or None")
+
+    @staticmethod
+    def _coerce_mode(value: object) -> int:
+        if not isinstance(value, int):
+            raise TypeError("packet_ct.mode must be int")
+        if value < 0 or value > 3:
+            raise ValueError("packet_ct.mode value out of range")
+        return value
+
+    @staticmethod
+    def _coerce_error_code(value: object) -> int:
+        if not isinstance(value, int):
+            raise TypeError("packet_ct.error_code must be int")
+        if value < 0 or value > 7:
+            raise ValueError("packet_ct.error_code value out of range")
+        return value
+
+    @staticmethod
+    def _coerce_data1(value: object) -> int:
+        if not isinstance(value, int):
+            raise TypeError("packet_ct.data1 must be int")
+        if value < 0 or value > 4294967295:
+            raise ValueError("packet_ct.data1 value out of range")
+        return value
+
+    @staticmethod
+    def _coerce_data2(value: object) -> int:
+        if not isinstance(value, int):
+            raise TypeError("packet_ct.data2 must be int")
+        if value < 0 or value > 4294967295:
+            raise ValueError("packet_ct.data2 value out of range")
+        return value
+
+    def to_bytes(self) -> bytes:
+        result = bytearray()
+        if self.header is None:
+            raise ValueError("header cannot be None during packing")
+        result.extend(self.header.to_bytes())
+        _packed_mode = self.mode & 3
+        result.extend(_packed_mode.to_bytes(1, "big", signed=False))
+        _packed_error_code = self.error_code & 7
+        result.extend(_packed_error_code.to_bytes(1, "big", signed=False))
+        _packed_data1 = self.data1 & 4294967295
+        result.extend(_packed_data1.to_bytes(4, "big", signed=False))
+        _packed_data2 = self.data2 & 4294967295
+        result.extend(_packed_data2.to_bytes(4, "big", signed=False))
+        return bytes(result)
+
+    @classmethod
+    def from_bytes(cls, data: bytes | bytearray) -> "packet_ct":
+        if not isinstance(data, (bytes, bytearray)):
+            raise TypeError("packet_ct.from_bytes expects bytes or bytearray")
+        raw = bytes(data)
+        if len(raw) != cls.BYTE_COUNT:
+            raise ValueError("packet_ct.from_bytes size mismatch")
+        obj = cls()
+        offset = 0
+        obj.header = header_ct.from_bytes(raw[offset:offset + 12])
+        offset += 12
+        obj.mode = int.from_bytes(raw[offset:offset + 1], "big", signed=False) & 3
+        offset += 1
+        obj.error_code = int.from_bytes(raw[offset:offset + 1], "big", signed=False) & 7
+        offset += 1
+        obj.data1 = int.from_bytes(raw[offset:offset + 4], "big", signed=False) & 4294967295
+        offset += 4
+        obj.data2 = int.from_bytes(raw[offset:offset + 4], "big", signed=False) & 4294967295
+        offset += 4
+        return obj
+
+    def clone(self) -> "packet_ct":
+        return type(self).from_bytes(self.to_bytes())

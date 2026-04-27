@@ -159,6 +159,26 @@
             "path": "alpha/typist/constants.py"
           },
           "state_kind": "bit"
+        },
+        {
+          "field_count": 3,
+          "kind": "struct",
+          "name": "header_t",
+          "source": {
+            "column": null,
+            "line": 19,
+            "path": "alpha/typist/constants.py"
+          }
+        },
+        {
+          "field_count": 5,
+          "kind": "struct",
+          "name": "packet_t",
+          "source": {
+            "column": null,
+            "line": 26,
+            "path": "alpha/typist/constants.py"
+          }
         }
       ]
     }

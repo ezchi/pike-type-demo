@@ -3,6 +3,7 @@
 // Do not edit by hand.
 
 package constants_pkg;
+
   localparam longint FOO = 64'sd100000;
   localparam int unsigned BAR = 32'd0;
   localparam int unsigned A = 32'd3;
@@ -11,8 +12,121 @@ package constants_pkg;
   localparam int D = (-A);
   localparam int E = (~A);
   localparam int W = 32'sd13;
-  typedef bit [W-1:0] addr_t;
-  typedef logic signed [8-1:0] mask_t;
+
+  localparam int LP_ADDR_WIDTH = W;
+  localparam int LP_ADDR_BYTE_COUNT = 2;
+
+  typedef bit [LP_ADDR_WIDTH-1:0] addr_t;
+
+  function automatic logic [LP_ADDR_WIDTH-1:0] pack_addr(addr_t a);
+    return a;
+  endfunction
+
+  function automatic addr_t unpack_addr(logic [LP_ADDR_WIDTH-1:0] a);
+    return a;
+  endfunction
+
+  localparam int LP_MASK_WIDTH = 8;
+  localparam int LP_MASK_BYTE_COUNT = 1;
+
+  typedef logic signed [LP_MASK_WIDTH-1:0] mask_t;
+
+  function automatic logic [LP_MASK_WIDTH-1:0] pack_mask(mask_t a);
+    return a;
+  endfunction
+
+  function automatic mask_t unpack_mask(logic [LP_MASK_WIDTH-1:0] a);
+    return a;
+  endfunction
+
+  localparam int LP_FLAG_WIDTH = 1;
+  localparam int LP_FLAG_BYTE_COUNT = 1;
+
   typedef bit flag_t;
-  typedef bit [67-1:0] big_data_t;
+
+  function automatic logic [LP_FLAG_WIDTH-1:0] pack_flag(flag_t a);
+    return a;
+  endfunction
+
+  function automatic flag_t unpack_flag(logic [LP_FLAG_WIDTH-1:0] a);
+    return a;
+  endfunction
+
+  localparam int LP_BIG_DATA_WIDTH = 67;
+  localparam int LP_BIG_DATA_BYTE_COUNT = 9;
+
+  typedef bit [LP_BIG_DATA_WIDTH-1:0] big_data_t;
+
+  function automatic logic [LP_BIG_DATA_WIDTH-1:0] pack_big_data(big_data_t a);
+    return a;
+  endfunction
+
+  function automatic big_data_t unpack_big_data(logic [LP_BIG_DATA_WIDTH-1:0] a);
+    return a;
+  endfunction
+
+  localparam int LP_HEADER_WIDTH = 81;
+  localparam int LP_HEADER_BYTE_COUNT = 12;
+
+  typedef struct packed {
+    logic [2:0] addr_pad;
+    addr_t addr;
+    logic [6:0] enable_pad;
+    flag_t enable;
+    logic [4:0] data_pad;
+    big_data_t data;
+  } header_t;
+
+  function automatic logic [LP_HEADER_WIDTH-1:0] pack_header(header_t a);
+    return {pack_addr(a.addr), pack_flag(a.enable), pack_big_data(a.data)};
+  endfunction
+
+  function automatic header_t unpack_header(logic [LP_HEADER_WIDTH-1:0] a);
+    header_t result;
+    int unsigned offset;
+    result = '0;
+    offset = 0;
+    result.data = unpack_big_data(a[offset +: LP_BIG_DATA_WIDTH]);
+    offset += LP_BIG_DATA_WIDTH;
+    result.enable = unpack_flag(a[offset +: LP_FLAG_WIDTH]);
+    offset += LP_FLAG_WIDTH;
+    result.addr = unpack_addr(a[offset +: LP_ADDR_WIDTH]);
+    offset += LP_ADDR_WIDTH;
+    return result;
+  endfunction
+
+  localparam int LP_PACKET_WIDTH = 150;
+  localparam int LP_PACKET_BYTE_COUNT = 22;
+
+  typedef struct packed {
+    header_t header;
+    logic [5:0] mode_pad;
+    logic [1:0] mode;
+    logic [4:0] error_code_pad;
+    bit [2:0] error_code;
+    logic [31:0] data1;
+    logic [31:0] data2;
+  } packet_t;
+
+  function automatic logic [LP_PACKET_WIDTH-1:0] pack_packet(packet_t a);
+    return {pack_header(a.header), a.mode, a.error_code, a.data1, a.data2};
+  endfunction
+
+  function automatic packet_t unpack_packet(logic [LP_PACKET_WIDTH-1:0] a);
+    packet_t result;
+    int unsigned offset;
+    result = '0;
+    offset = 0;
+    result.data2 = a[offset +: 32];
+    offset += 32;
+    result.data1 = a[offset +: 32];
+    offset += 32;
+    result.error_code = a[offset +: 3];
+    offset += 3;
+    result.mode = a[offset +: 2];
+    offset += 2;
+    result.header = unpack_header(a[offset +: LP_HEADER_WIDTH]);
+    offset += LP_HEADER_WIDTH;
+    return result;
+  endfunction
 endpackage
