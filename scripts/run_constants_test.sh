@@ -2,7 +2,7 @@
 set -e
 
 # Path to the original files
-GEN_DIR="gen/sv/alpha/typist"
+GEN_DIR="gen/sv/alpha/piketype"
 TEST_DIR="tests/sv"
 BUILD_TMP="build_tmp"
 OBJ_DIR="obj_dir"
