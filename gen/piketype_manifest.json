@@ -11,7 +11,7 @@
           "source": {
             "column": null,
             "line": 3,
-            "path": "alpha/typist/constants.py"
+            "path": "alpha/piketype/constants.py"
           }
         },
         {
@@ -22,7 +22,7 @@
           "source": {
             "column": null,
             "line": 4,
-            "path": "alpha/typist/constants.py"
+            "path": "alpha/piketype/constants.py"
           }
         },
         {
@@ -33,7 +33,7 @@
           "source": {
             "column": null,
             "line": 6,
-            "path": "alpha/typist/constants.py"
+            "path": "alpha/piketype/constants.py"
           }
         },
         {
@@ -44,7 +44,7 @@
           "source": {
             "column": null,
             "line": 7,
-            "path": "alpha/typist/constants.py"
+            "path": "alpha/piketype/constants.py"
           }
         },
         {
@@ -55,7 +55,7 @@
           "source": {
             "column": null,
             "line": 8,
-            "path": "alpha/typist/constants.py"
+            "path": "alpha/piketype/constants.py"
           }
         },
         {
@@ -66,7 +66,7 @@
           "source": {
             "column": null,
             "line": 9,
-            "path": "alpha/typist/constants.py"
+            "path": "alpha/piketype/constants.py"
           }
         },
         {
@@ -77,7 +77,7 @@
           "source": {
             "column": null,
             "line": 10,
-            "path": "alpha/typist/constants.py"
+            "path": "alpha/piketype/constants.py"
           }
         },
         {
@@ -88,28 +88,28 @@
           "source": {
             "column": null,
             "line": 12,
-            "path": "alpha/typist/constants.py"
+            "path": "alpha/piketype/constants.py"
           }
         }
       ],
       "dependencies": [],
       "generated_outputs": {
-        "cpp": "gen/cpp/alpha/typist/constants_types.hpp",
-        "py": "gen/py/alpha/typist/constants_types.py",
-        "sv": "gen/sv/alpha/typist/constants_pkg.sv",
-        "sv_test": "gen/sv/alpha/typist/constants_test_pkg.sv"
+        "cpp": "gen/cpp/alpha/piketype/constants_types.hpp",
+        "py": "gen/py/alpha/piketype/constants_types.py",
+        "sv": "gen/sv/alpha/piketype/constants_pkg.sv",
+        "sv_test": "gen/sv/alpha/piketype/constants_test_pkg.sv"
       },
       "namespace_parts": [
         "alpha",
-        "typist",
+        "piketype",
         "constants"
       ],
-      "python_module_name": "alpha.typist.constants",
-      "repo_relative_path": "alpha/typist/constants.py",
+      "python_module_name": "alpha.piketype.constants",
+      "repo_relative_path": "alpha/piketype/constants.py",
       "source": {
         "column": null,
         "line": 1,
-        "path": "alpha/typist/constants.py"
+        "path": "alpha/piketype/constants.py"
       },
       "types": [
         {
@@ -120,7 +120,7 @@
           "source": {
             "column": null,
             "line": 13,
-            "path": "alpha/typist/constants.py"
+            "path": "alpha/piketype/constants.py"
           },
           "state_kind": "bit"
         },
@@ -132,7 +132,7 @@
           "source": {
             "column": null,
             "line": 14,
-            "path": "alpha/typist/constants.py"
+            "path": "alpha/piketype/constants.py"
           },
           "state_kind": "logic"
         },
@@ -144,7 +144,7 @@
           "source": {
             "column": null,
             "line": 15,
-            "path": "alpha/typist/constants.py"
+            "path": "alpha/piketype/constants.py"
           },
           "state_kind": "bit"
         },
@@ -156,9 +156,24 @@
           "source": {
             "column": null,
             "line": 16,
-            "path": "alpha/typist/constants.py"
+            "path": "alpha/piketype/constants.py"
           },
           "state_kind": "bit"
+        },
+        {
+          "flag_count": 3,
+          "flag_names": [
+            "invalid_data",
+            "timeout",
+            "overflow"
+          ],
+          "kind": "flags",
+          "name": "flags_t",
+          "source": {
+            "column": null,
+            "line": 19,
+            "path": "alpha/piketype/constants.py"
+          }
         },
         {
           "field_count": 3,
@@ -166,8 +181,8 @@
           "name": "header_t",
           "source": {
             "column": null,
-            "line": 19,
-            "path": "alpha/typist/constants.py"
+            "line": 26,
+            "path": "alpha/piketype/constants.py"
           }
         },
         {
@@ -176,8 +191,8 @@
           "name": "packet_t",
           "source": {
             "column": null,
-            "line": 26,
-            "path": "alpha/typist/constants.py"
+            "line": 33,
+            "path": "alpha/piketype/constants.py"
           }
         }
       ]
@@ -185,10 +200,10 @@
   ],
   "repo_root": ".",
   "runtime_outputs": {
-    "cpp_header": "gen/cpp/runtime/typist_runtime.hpp",
-    "cpp_source": "gen/cpp/runtime/typist_runtime.cpp",
-    "py": "gen/py/runtime/typist_runtime.py",
-    "sv": "gen/sv/runtime/typist_runtime_pkg.sv"
+    "cpp_header": "gen/cpp/runtime/piketype_runtime.hpp",
+    "cpp_source": "gen/cpp/runtime/piketype_runtime.cpp",
+    "py": "gen/py/runtime/piketype_runtime.py",
+    "sv": "gen/sv/runtime/piketype_runtime_pkg.sv"
   },
   "tool_version": "0.1.0"
 }

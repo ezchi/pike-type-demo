@@ -1,4 +1,4 @@
-from typist.dsl import Const, Bit, Logic, Struct
+from piketype.dsl import Const, Bit, Logic, Struct, Flags
 
 FOO = Const(100000, signed=True, width=64)
 BAR = Const(0, signed=False)
@@ -14,6 +14,13 @@ addr_t = Bit(W)
 mask_t = Logic(8, signed=True)
 flag_t = Bit(1)
 big_data_t = Bit(67)
+
+flags_t = (
+    Flags()
+    .add_flag("invalid_data")
+    .add_flag("timeout")
+    .add_flag("overflow")
+    )
 
 header_t = (
     Struct()
