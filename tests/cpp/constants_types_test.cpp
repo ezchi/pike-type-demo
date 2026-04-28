@@ -120,11 +120,13 @@ void test_header_ct() {
   header_ct h;
   h.addr = addr_ct(0x1ABC);
   h.enable = flag_ct(1);
+  h.status.set_invalid_data(true);
+  h.status.set_timeout(true);
   // data defaults to all zeros (9 bytes)
 
-  // Byte layout: addr(2) | enable(1) | data(9) = 12 bytes
+  // Byte layout: addr(2) | enable(1) | data(9) | status(1) = 13 bytes
   auto bytes = h.to_bytes();
-  assert(bytes.size() == 12);
+  assert(bytes.size() == header_ct::BYTE_COUNT);
 
   // addr big-endian: 0x1ABC -> [0x1A, 0xBC]
   assert(bytes[0] == 0x1A);
@@ -135,11 +137,16 @@ void test_header_ct() {
   for (std::size_t i = 3; i < 12; ++i) {
     assert(bytes[i] == 0);
   }
+  // status: invalid_data | timeout
+  assert(bytes[12] == 0xC0);
 
   header_ct h2;
   h2.from_bytes(bytes);
   assert(h2.addr.value == 0x1ABC);
   assert(h2.enable.value == 1);
+  assert(h2.status.get_invalid_data());
+  assert(h2.status.get_timeout());
+  assert(!h2.status.get_overflow());
   assert(h == h2);
 }
 
@@ -148,18 +155,21 @@ void test_packet_ct() {
   packet_ct p;
   p.header.addr = addr_ct(0x555);
   p.header.enable = flag_ct(0);
+  p.header.status.set_overflow(true);
   p.mode = 2;
   p.error_code = 5;
   // data1, data2 default to 0
 
-  // Byte layout: header(12) | mode(1) | error_code(1) | data1(4) | data2(4) = 22 bytes
+  // Byte layout: header(13) | mode(1) | error_code(1) | data1(4) | data2(4) = 23 bytes
   auto bytes = p.to_bytes();
-  assert(bytes.size() == 22);
+  assert(bytes.size() == packet_ct::BYTE_COUNT);
+  assert(bytes[12] == 0x20);
 
   packet_ct p2;
   p2.from_bytes(bytes);
   assert(p2.header.addr.value == 0x555);
   assert(p2.header.enable.value == 0);
+  assert(p2.header.status.get_overflow());
   assert(p2.mode == 2);
   assert(p2.error_code == 5);
   assert(p2.data1 == 0);
