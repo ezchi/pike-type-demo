@@ -1,10 +1,10 @@
-#include "../../gen/cpp/alpha/typist/constants_types.hpp"
+#include "../../gen/cpp/alpha/piketype/constants_types.hpp"
 #include <iostream>
 #include <cassert>
 #include <vector>
 #include <stdexcept>
 
-using namespace foo::bar::constants;
+using namespace alpha::constants;
 
 void test_constants() {
   std::cout << "Testing constants..." << std::endl;
@@ -23,8 +23,8 @@ void test_addr_ct() {
   addr_ct addr(1234);
   assert(addr.value == 1234);
   assert(static_cast<std::uint16_t>(addr) == 1234);
-  assert(addr_ct::kWidth == 13);
-  assert(addr_ct::kMaxValue == 8191);
+  assert(addr_ct::WIDTH == 13);
+  assert(addr_ct::MAX_VALUE == 8191);
 
   // Validation
   try {
@@ -50,8 +50,8 @@ void test_mask_ct() {
   std::cout << "Testing mask_ct..." << std::endl;
   mask_ct mask(-50);
   assert(mask.value == -50);
-  assert(mask_ct::kSigned == true);
-  assert(mask_ct::kWidth == 8);
+  assert(mask_ct::SIGNED == true);
+  assert(mask_ct::WIDTH == 8);
 
   // Validation: For an 8-bit signed type with an int8_t underlying type,
   // all possible int8_t values are within [-128, 127].
@@ -74,7 +74,7 @@ void test_flag_ct() {
   std::cout << "Testing flag_ct..." << std::endl;
   flag_ct f(1);
   assert(f.value == 1);
-  assert(flag_ct::kWidth == 1);
+  assert(flag_ct::WIDTH == 1);
 
   try {
     flag_ct bad(2);
@@ -97,8 +97,8 @@ void test_big_data_ct() {
   std::vector<std::uint8_t> data = {1, 2, 3, 4, 5, 6, 7, 8, 9};
   big_data_ct bd(data);
   assert(bd.value == data);
-  assert(big_data_ct::kWidth == 67);
-  assert(big_data_ct::kByteCount == 9);
+  assert(big_data_ct::WIDTH == 67);
+  assert(big_data_ct::BYTE_COUNT == 9);
 
   try {
     big_data_ct bad(std::vector<std::uint8_t>{1, 2});
