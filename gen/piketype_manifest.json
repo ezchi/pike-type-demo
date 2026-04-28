@@ -176,7 +176,7 @@
           }
         },
         {
-          "field_count": 3,
+          "field_count": 4,
           "kind": "struct",
           "name": "header_t",
           "source": {
@@ -191,7 +191,7 @@
           "name": "packet_t",
           "source": {
             "column": null,
-            "line": 33,
+            "line": 34,
             "path": "alpha/piketype/constants.py"
           }
         }

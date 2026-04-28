@@ -269,11 +269,12 @@ class flags_ct {
 
 class header_ct {
  public:
-  static constexpr std::size_t WIDTH = 81;
-  static constexpr std::size_t BYTE_COUNT = 12;
+  static constexpr std::size_t WIDTH = 84;
+  static constexpr std::size_t BYTE_COUNT = 13;
   addr_ct addr{};
   flag_ct enable{};
   big_data_ct data{};
+  flags_ct status{};
 
   header_ct() = default;
 
@@ -290,6 +291,10 @@ class header_ct {
     }
     {
       auto field_bytes = data.to_bytes();
+      bytes.insert(bytes.end(), field_bytes.begin(), field_bytes.end());
+    }
+    {
+      auto field_bytes = status.to_bytes();
       bytes.insert(bytes.end(), field_bytes.begin(), field_bytes.end());
     }
     return bytes;
@@ -315,6 +320,11 @@ class header_ct {
       data.from_bytes(field_bytes);
       offset += 9;
     }
+    {
+      std::vector<std::uint8_t> field_bytes(bytes.begin() + static_cast<std::ptrdiff_t>(offset), bytes.begin() + static_cast<std::ptrdiff_t>(offset + 1));
+      status.from_bytes(field_bytes);
+      offset += 1;
+    }
   }
 
   header_ct clone() const {
@@ -322,6 +332,7 @@ class header_ct {
     cloned.addr = addr.clone();
     cloned.enable = enable.clone();
     cloned.data = data.clone();
+    cloned.status = status.clone();
     return cloned;
   }
 
@@ -330,8 +341,8 @@ class header_ct {
 
 class packet_ct {
  public:
-  static constexpr std::size_t WIDTH = 150;
-  static constexpr std::size_t BYTE_COUNT = 22;
+  static constexpr std::size_t WIDTH = 153;
+  static constexpr std::size_t BYTE_COUNT = 23;
   header_ct header{};
   std::uint8_t mode = 0;
   std::uint8_t error_code = 0;
@@ -372,9 +383,9 @@ class packet_ct {
     }
     std::size_t offset = 0;
     {
-      std::vector<std::uint8_t> field_bytes(bytes.begin() + static_cast<std::ptrdiff_t>(offset), bytes.begin() + static_cast<std::ptrdiff_t>(offset + 12));
+      std::vector<std::uint8_t> field_bytes(bytes.begin() + static_cast<std::ptrdiff_t>(offset), bytes.begin() + static_cast<std::ptrdiff_t>(offset + 13));
       header.from_bytes(field_bytes);
-      offset += 12;
+      offset += 13;
     }
     mode = decode_mode(bytes, offset);
     offset += 1;

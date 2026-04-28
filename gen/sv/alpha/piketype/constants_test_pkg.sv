@@ -269,9 +269,9 @@ package constants_test_pkg;
       logic [7:0] bv;
       bytes = new[BYTE_COUNT];
       bv = '0;
-      bv[2] = invalid_data;
-      bv[1] = timeout;
-      bv[0] = overflow;
+      bv[7] = invalid_data;
+      bv[6] = timeout;
+      bv[5] = overflow;
       for (int idx = 0; idx < BYTE_COUNT; idx++) begin
         bytes[idx] = bv[(BYTE_COUNT - 1 - idx)*8 +: 8];
       end
@@ -286,9 +286,9 @@ package constants_test_pkg;
       for (int idx = 0; idx < BYTE_COUNT; idx++) begin
         bv[(BYTE_COUNT - 1 - idx)*8 +: 8] = bytes[idx];
       end
-      invalid_data = bv[2];
-      timeout = bv[1];
-      overflow = bv[0];
+      invalid_data = bv[7];
+      timeout = bv[6];
+      overflow = bv[5];
     endfunction
   
     function void copy(input flags_ct rhs);
@@ -323,11 +323,13 @@ package constants_test_pkg;
     rand addr_t addr;
     rand flag_t enable;
     rand big_data_t data;
+    flags_ct status;
   
     function new();
       addr = '0;
       enable = '0;
       data = '0;
+      status = new();
     endfunction
   
     function automatic header_t to_slv();
@@ -338,6 +340,7 @@ package constants_test_pkg;
       packed_value.enable_pad = '0;
       packed_value.data = data;
       packed_value.data_pad = '0;
+      packed_value.status = status.to_slv();
       return packed_value;
     endfunction
   
@@ -345,6 +348,7 @@ package constants_test_pkg;
       addr = value_in.addr;
       enable = value_in.enable;
       data = value_in.data;
+      status.from_slv(value_in.status);
     endfunction
   
     task automatic to_bytes(output byte unsigned bytes[]);
@@ -371,6 +375,12 @@ package constants_test_pkg;
         fb[66:0] = data;
         for (int i = 0; i < 9; i++) bytes[byte_idx + i] = fb[(9 - 1 - i)*8 +: 8];
         byte_idx += 9;
+      end
+      begin
+        byte unsigned field_bytes[];
+        status.to_bytes(field_bytes);
+        for (int i = 0; i < 1; i++) bytes[byte_idx + i] = field_bytes[i];
+        byte_idx += 1;
       end
     endtask
   
@@ -401,12 +411,19 @@ package constants_test_pkg;
         data = fb[66:0];
         byte_idx += 9;
       end
+      begin
+        byte unsigned field_bytes[] = new[1];
+        for (int i = 0; i < 1; i++) field_bytes[i] = bytes[byte_idx + i];
+        status.from_bytes(field_bytes);
+        byte_idx += 1;
+      end
     endfunction
   
     function void copy(input header_ct rhs);
       addr = rhs.addr;
       enable = rhs.enable;
       data = rhs.data;
+      status.copy(rhs.status);
     endfunction
   
     function automatic header_ct clone();
@@ -421,11 +438,12 @@ package constants_test_pkg;
       match &= (addr === rhs.addr);
       match &= (enable === rhs.enable);
       match &= (data === rhs.data);
+      match &= status.compare(rhs.status);
       return match;
     endfunction
   
     function automatic string sprint();
-      return $sformatf("header_ct(addr=0x%0h, enable=0x%0h, data=0x%0h)", addr, enable, data);
+      return $sformatf("header_ct(addr=0x%0h, enable=0x%0h, data=0x%0h, status=%s)", addr, enable, data, status.sprint());
     endfunction
   endclass : header_ct
 
@@ -473,8 +491,8 @@ package constants_test_pkg;
       begin
         byte unsigned field_bytes[];
         header.to_bytes(field_bytes);
-        for (int i = 0; i < 12; i++) bytes[byte_idx + i] = field_bytes[i];
-        byte_idx += 12;
+        for (int i = 0; i < 13; i++) bytes[byte_idx + i] = field_bytes[i];
+        byte_idx += 13;
       end
       begin
         logic [7:0] fb;
@@ -513,10 +531,10 @@ package constants_test_pkg;
       end
       byte_idx = 0;
       begin
-        byte unsigned field_bytes[] = new[12];
-        for (int i = 0; i < 12; i++) field_bytes[i] = bytes[byte_idx + i];
+        byte unsigned field_bytes[] = new[13];
+        for (int i = 0; i < 13; i++) field_bytes[i] = bytes[byte_idx + i];
         header.from_bytes(field_bytes);
-        byte_idx += 12;
+        byte_idx += 13;
       end
       begin
         logic [7:0] fb;

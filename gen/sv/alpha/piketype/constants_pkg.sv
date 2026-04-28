@@ -88,8 +88,8 @@ package constants_pkg;
     return result;
   endfunction
 
-  localparam int LP_HEADER_WIDTH = 81;
-  localparam int LP_HEADER_BYTE_COUNT = 12;
+  localparam int LP_HEADER_WIDTH = 84;
+  localparam int LP_HEADER_BYTE_COUNT = 13;
 
   typedef struct packed {
     logic [2:0] addr_pad;
@@ -98,10 +98,11 @@ package constants_pkg;
     flag_t enable;
     logic [4:0] data_pad;
     big_data_t data;
+    flags_t status;
   } header_t;
 
   function automatic logic [LP_HEADER_WIDTH-1:0] pack_header(header_t a);
-    return {pack_addr(a.addr), pack_flag(a.enable), pack_big_data(a.data)};
+    return {pack_addr(a.addr), pack_flag(a.enable), pack_big_data(a.data), pack_flags(a.status)};
   endfunction
 
   function automatic header_t unpack_header(logic [LP_HEADER_WIDTH-1:0] a);
@@ -109,6 +110,8 @@ package constants_pkg;
     int unsigned offset;
     result = '0;
     offset = 0;
+    result.status = unpack_flags(a[offset +: LP_FLAGS_WIDTH]);
+    offset += LP_FLAGS_WIDTH;
     result.data = unpack_big_data(a[offset +: LP_BIG_DATA_WIDTH]);
     offset += LP_BIG_DATA_WIDTH;
     result.enable = unpack_flag(a[offset +: LP_FLAG_WIDTH]);
@@ -118,8 +121,8 @@ package constants_pkg;
     return result;
   endfunction
 
-  localparam int LP_PACKET_WIDTH = 150;
-  localparam int LP_PACKET_BYTE_COUNT = 22;
+  localparam int LP_PACKET_WIDTH = 153;
+  localparam int LP_PACKET_BYTE_COUNT = 23;
 
   typedef struct packed {
     header_t header;

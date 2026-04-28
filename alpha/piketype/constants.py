@@ -27,6 +27,7 @@ header_t = (
     .add_member("addr", addr_t)
     .add_member("enable", flag_t)
     .add_member("data", big_data_t)
+    .add_member("status", flags_t)
 )
 
 packet_t = (

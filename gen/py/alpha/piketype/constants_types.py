@@ -309,11 +309,12 @@ class flags_ct:
 
 @dataclass
 class header_ct:
-    WIDTH = 81
-    BYTE_COUNT = 12
+    WIDTH = 84
+    BYTE_COUNT = 13
     addr: addr_ct = field(default_factory=addr_ct)
     enable: flag_ct = field(default_factory=flag_ct)
     data: big_data_ct = field(default_factory=big_data_ct)
+    status: flags_ct = field(default_factory=flags_ct)
 
     def __setattr__(self, name: str, value: object) -> None:
         if name == "addr":
@@ -322,6 +323,8 @@ class header_ct:
             value = self._coerce_enable(value)
         elif name == "data":
             value = self._coerce_data(value)
+        elif name == "status":
+            value = self._coerce_status(value)
         super().__setattr__(name, value)
 
     @staticmethod
@@ -342,11 +345,18 @@ class header_ct:
             return value
         return big_data_ct(value)
 
+    @staticmethod
+    def _coerce_status(value: object) -> flags_ct:
+        if isinstance(value, flags_ct):
+            return value
+        raise TypeError("header_ct.status must be flags_ct")
+
     def to_bytes(self) -> bytes:
         result = bytearray()
         result.extend(self.addr.to_bytes())
         result.extend(self.enable.to_bytes())
         result.extend(self.data.to_bytes())
+        result.extend(self.status.to_bytes())
         return bytes(result)
 
     @classmethod
@@ -364,6 +374,8 @@ class header_ct:
         offset += 1
         obj.data = big_data_ct.from_bytes(raw[offset:offset + 9])
         offset += 9
+        obj.status = flags_ct.from_bytes(raw[offset:offset + 1])
+        offset += 1
         return obj
 
     def clone(self) -> "header_ct":
@@ -371,8 +383,8 @@ class header_ct:
 
 @dataclass
 class packet_ct:
-    WIDTH = 150
-    BYTE_COUNT = 22
+    WIDTH = 153
+    BYTE_COUNT = 23
     header: header_ct | None = field(default_factory=header_ct)
     mode: int = 0
     error_code: int = 0
@@ -456,8 +468,8 @@ class packet_ct:
             raise ValueError("packet_ct.from_bytes size mismatch")
         obj = cls()
         offset = 0
-        obj.header = header_ct.from_bytes(raw[offset:offset + 12])
-        offset += 12
+        obj.header = header_ct.from_bytes(raw[offset:offset + 13])
+        offset += 13
         obj.mode = int.from_bytes(raw[offset:offset + 1], "big", signed=False) & 3
         offset += 1
         obj.error_code = int.from_bytes(raw[offset:offset + 1], "big", signed=False) & 7
