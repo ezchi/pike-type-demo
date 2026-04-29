@@ -65,6 +65,19 @@ package constants_pkg;
     return a;
   endfunction
 
+  localparam int LP_STATUS_WIDTH = 3;
+  localparam int LP_STATUS_BYTE_COUNT = 1;
+
+  typedef enum logic [LP_STATUS_WIDTH-1:0] {OK = 0, ERROR = 1, TIMEOUT = 2, UNKNOWN = 3, INVALID = 4} status_t;
+
+  function automatic logic [LP_STATUS_WIDTH-1:0] pack_status(status_t a);
+    return logic'(a);
+  endfunction
+
+  function automatic status_t unpack_status(logic [LP_STATUS_WIDTH-1:0] a);
+    return status_t'(a);
+  endfunction
+
   localparam int LP_FLAGS_WIDTH = 3;
   localparam int LP_FLAGS_BYTE_COUNT = 1;
 
@@ -121,11 +134,13 @@ package constants_pkg;
     return result;
   endfunction
 
-  localparam int LP_PACKET_WIDTH = 153;
-  localparam int LP_PACKET_BYTE_COUNT = 23;
+  localparam int LP_PACKET_WIDTH = 156;
+  localparam int LP_PACKET_BYTE_COUNT = 24;
 
   typedef struct packed {
     header_t header;
+    logic [4:0] status_pad;
+    status_t status;
     logic [5:0] mode_pad;
     logic [1:0] mode;
     logic [4:0] error_code_pad;
@@ -135,7 +150,7 @@ package constants_pkg;
   } packet_t;
 
   function automatic logic [LP_PACKET_WIDTH-1:0] pack_packet(packet_t a);
-    return {pack_header(a.header), a.mode, a.error_code, a.data1, a.data2};
+    return {pack_header(a.header), pack_status(a.status), a.mode, a.error_code, a.data1, a.data2};
   endfunction
 
   function automatic packet_t unpack_packet(logic [LP_PACKET_WIDTH-1:0] a);
@@ -151,6 +166,8 @@ package constants_pkg;
     offset += 3;
     result.mode = a[offset +: 2];
     offset += 2;
+    result.status = unpack_status(a[offset +: LP_STATUS_WIDTH]);
+    offset += LP_STATUS_WIDTH;
     result.header = unpack_header(a[offset +: LP_HEADER_WIDTH]);
     offset += LP_HEADER_WIDTH;
     return result;

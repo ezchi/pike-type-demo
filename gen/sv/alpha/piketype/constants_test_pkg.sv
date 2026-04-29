@@ -237,6 +237,64 @@ package constants_test_pkg;
     endfunction
   endclass : big_data_ct
 
+  class status_ct;
+    localparam int WIDTH = LP_STATUS_WIDTH;
+    localparam int BYTE_COUNT = LP_STATUS_BYTE_COUNT;
+    rand status_t value;
+  
+    function new(status_t value_in = OK);
+      value = value_in;
+    endfunction
+  
+    function automatic status_t to_slv();
+      return value;
+    endfunction
+  
+    function void from_slv(status_t value_in);
+      value = value_in;
+    endfunction
+  
+    task automatic to_bytes(output byte unsigned bytes[]);
+      logic [7:0] padded;
+      bytes = new[BYTE_COUNT];
+      padded = '0;
+      padded[WIDTH-1:0] = value;
+      for (int idx = 0; idx < BYTE_COUNT; idx++) begin
+        bytes[idx] = padded[(BYTE_COUNT - 1 - idx)*8 +: 8];
+      end
+    endtask
+  
+    function void from_bytes(input byte unsigned bytes[]);
+      logic [7:0] padded;
+      if (bytes.size() != BYTE_COUNT) begin
+        $fatal(1, "status_ct.from_bytes size mismatch: expected %0d got %0d", BYTE_COUNT, bytes.size());
+      end
+      padded = '0;
+      for (int idx = 0; idx < BYTE_COUNT; idx++) begin
+        padded[(BYTE_COUNT - 1 - idx)*8 +: 8] = bytes[idx];
+      end
+      value = status_t'(padded[WIDTH-1:0]);
+    endfunction
+  
+    function void copy(input status_ct rhs);
+      value = rhs.value;
+    endfunction
+  
+    function automatic status_ct clone();
+      status_ct cloned = new();
+      cloned.value = value;
+      return cloned;
+    endfunction
+  
+    function automatic bit compare(input status_ct rhs);
+      return value === rhs.value;
+    endfunction
+  
+    function automatic string sprint();
+      return $sformatf("status_ct(value=0x%0h)", value);
+    endfunction
+  endclass : status_ct
+
   class flags_ct;
     localparam int WIDTH = 3;
     localparam int BYTE_COUNT = 1;
@@ -451,6 +509,7 @@ package constants_test_pkg;
     localparam int WIDTH = LP_PACKET_WIDTH;
     localparam int BYTE_COUNT = LP_PACKET_BYTE_COUNT;
     header_ct header;
+    status_ct status;
     rand logic [1:0] mode;
     rand bit [2:0] error_code;
     rand logic [31:0] data1;
@@ -458,6 +517,7 @@ package constants_test_pkg;
   
     function new();
       header = new();
+      status = new();
       mode = '0;
       error_code = '0;
       data1 = '0;
@@ -467,6 +527,8 @@ package constants_test_pkg;
     function automatic packet_t to_slv();
       packet_t packed_value;
       packed_value.header = header.to_slv();
+      packed_value.status = status.to_slv();
+      packed_value.status_pad = '0;
       packed_value.mode = mode;
       packed_value.mode_pad = '0;
       packed_value.error_code = error_code;
@@ -478,6 +540,7 @@ package constants_test_pkg;
   
     function void from_slv(packet_t value_in);
       header.from_slv(value_in.header);
+      status.from_slv(value_in.status);
       mode = value_in.mode;
       error_code = value_in.error_code;
       data1 = value_in.data1;
@@ -493,6 +556,12 @@ package constants_test_pkg;
         header.to_bytes(field_bytes);
         for (int i = 0; i < 13; i++) bytes[byte_idx + i] = field_bytes[i];
         byte_idx += 13;
+      end
+      begin
+        byte unsigned field_bytes[];
+        status.to_bytes(field_bytes);
+        for (int i = 0; i < 1; i++) bytes[byte_idx + i] = field_bytes[i];
+        byte_idx += 1;
       end
       begin
         logic [7:0] fb;
@@ -537,6 +606,12 @@ package constants_test_pkg;
         byte_idx += 13;
       end
       begin
+        byte unsigned field_bytes[] = new[1];
+        for (int i = 0; i < 1; i++) field_bytes[i] = bytes[byte_idx + i];
+        status.from_bytes(field_bytes);
+        byte_idx += 1;
+      end
+      begin
         logic [7:0] fb;
         fb = '0;
         for (int i = 0; i < 1; i++) fb[(1 - 1 - i)*8 +: 8] = bytes[byte_idx + i];
@@ -568,6 +643,7 @@ package constants_test_pkg;
   
     function void copy(input packet_ct rhs);
       header.copy(rhs.header);
+      status.copy(rhs.status);
       mode = rhs.mode;
       error_code = rhs.error_code;
       data1 = rhs.data1;
@@ -584,6 +660,7 @@ package constants_test_pkg;
       bit match;
       match = 1'b1;
       match &= header.compare(rhs.header);
+      match &= status.compare(rhs.status);
       match &= (mode === rhs.mode);
       match &= (error_code === rhs.error_code);
       match &= (data1 === rhs.data1);
@@ -592,7 +669,7 @@ package constants_test_pkg;
     endfunction
   
     function automatic string sprint();
-      return $sformatf("packet_ct(header=%s, mode=0x%0h, error_code=0x%0h, data1=0x%0h, data2=0x%0h)", header.sprint(), mode, error_code, data1, data2);
+      return $sformatf("packet_ct(header=%s, status=%s, mode=0x%0h, error_code=0x%0h, data1=0x%0h, data2=0x%0h)", header.sprint(), status.sprint(), mode, error_code, data1, data2);
     endfunction
   endclass : packet_ct
 endpackage

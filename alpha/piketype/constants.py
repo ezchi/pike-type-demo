@@ -1,4 +1,4 @@
-from piketype.dsl import Const, Bit, Logic, Struct, Flags
+from piketype.dsl import Const, Bit, Logic, Struct, Flags, Enum
 
 FOO = Const(100000, signed=True, width=64)
 BAR = Const(0, signed=False)
@@ -14,6 +14,15 @@ addr_t = Bit(W)
 mask_t = Logic(8, signed=True)
 flag_t = Bit(1)
 big_data_t = Bit(67)
+
+status_t = (
+    Enum()
+    .add_value("OK")
+    .add_value("ERROR")
+    .add_value("TIMEOUT")
+    .add_value("UNKNOWN")
+    .add_value("INVALID")
+    )
 
 flags_t = (
     Flags()
@@ -33,6 +42,7 @@ header_t = (
 packet_t = (
     Struct()
     .add_member("header", header_t)
+    .add_member("status", status_t)
     .add_member("mode", Logic(2))
     .add_member("error_code", Bit(3))
     .add_member("data1", Logic(32))
