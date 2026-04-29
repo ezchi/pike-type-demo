@@ -161,6 +161,39 @@
           "state_kind": "bit"
         },
         {
+          "kind": "enum",
+          "name": "status_t",
+          "resolved_width": 3,
+          "source": {
+            "column": null,
+            "line": 19,
+            "path": "alpha/piketype/constants.py"
+          },
+          "value_count": 5,
+          "values": [
+            {
+              "name": "OK",
+              "resolved_value": 0
+            },
+            {
+              "name": "ERROR",
+              "resolved_value": 1
+            },
+            {
+              "name": "TIMEOUT",
+              "resolved_value": 2
+            },
+            {
+              "name": "UNKNOWN",
+              "resolved_value": 3
+            },
+            {
+              "name": "INVALID",
+              "resolved_value": 4
+            }
+          ]
+        },
+        {
           "flag_count": 3,
           "flag_names": [
             "invalid_data",
@@ -171,7 +204,7 @@
           "name": "flags_t",
           "source": {
             "column": null,
-            "line": 19,
+            "line": 28,
             "path": "alpha/piketype/constants.py"
           }
         },
@@ -181,17 +214,17 @@
           "name": "header_t",
           "source": {
             "column": null,
-            "line": 26,
+            "line": 35,
             "path": "alpha/piketype/constants.py"
           }
         },
         {
-          "field_count": 5,
+          "field_count": 6,
           "kind": "struct",
           "name": "packet_t",
           "source": {
             "column": null,
-            "line": 34,
+            "line": 43,
             "path": "alpha/piketype/constants.py"
           }
         }

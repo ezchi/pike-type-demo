@@ -215,6 +215,62 @@ class big_data_ct {
   }
 };
 
+enum class status_enum_t : std::uint8_t {OK = 0U, ERROR = 1U, TIMEOUT = 2U, UNKNOWN = 3U, INVALID = 4U};
+
+class status_ct {
+ public:
+  static constexpr std::size_t WIDTH = 3;
+  static constexpr std::size_t BYTE_COUNT = 1;
+  using enum_type = status_enum_t;
+  enum_type value;
+
+  status_ct() : value(status_enum_t::OK) {}
+  explicit status_ct(enum_type value_in) : value(validate_value(value_in)) {}
+
+  std::vector<std::uint8_t> to_bytes() const {
+    std::vector<std::uint8_t> bytes(1, 0);
+    std::uint64_t bits = static_cast<std::uint64_t>(value);
+    for (std::size_t idx = 0; idx < 1; ++idx) {
+      bytes[1 - 1 - idx] = static_cast<std::uint8_t>((bits >> (8U * idx)) & 0xFFU);
+    }
+    return bytes;
+  }
+
+  void from_bytes(const std::vector<std::uint8_t>& bytes) {
+    if (bytes.size() != 1) {
+      throw std::invalid_argument("byte width mismatch");
+    }
+    std::uint64_t bits = 0;
+    for (std::size_t idx = 0; idx < 1; ++idx) {
+      bits = (bits << 8U) | bytes[idx];
+    }
+    value = validate_value(static_cast<enum_type>(bits & 7U));
+  }
+
+  status_ct clone() const {
+    return status_ct(value);
+  }
+
+  operator enum_type() const {
+    return value;
+  }
+
+  bool operator==(const status_ct& other) const = default;
+
+ private:
+  static enum_type validate_value(enum_type v) {
+    switch (v) {
+      case status_enum_t::OK: return v;
+      case status_enum_t::ERROR: return v;
+      case status_enum_t::TIMEOUT: return v;
+      case status_enum_t::UNKNOWN: return v;
+      case status_enum_t::INVALID: return v;
+      default:
+        throw std::invalid_argument("unknown enum value");
+    }
+  }
+};
+
 class flags_ct {
  public:
   static constexpr std::size_t WIDTH = 3;
@@ -341,9 +397,10 @@ class header_ct {
 
 class packet_ct {
  public:
-  static constexpr std::size_t WIDTH = 153;
-  static constexpr std::size_t BYTE_COUNT = 23;
+  static constexpr std::size_t WIDTH = 156;
+  static constexpr std::size_t BYTE_COUNT = 24;
   header_ct header{};
+  status_ct status{};
   std::uint8_t mode = 0;
   std::uint8_t error_code = 0;
   std::uint32_t data1 = 0;
@@ -356,6 +413,10 @@ class packet_ct {
     bytes.reserve(BYTE_COUNT);
     {
       auto field_bytes = header.to_bytes();
+      bytes.insert(bytes.end(), field_bytes.begin(), field_bytes.end());
+    }
+    {
+      auto field_bytes = status.to_bytes();
       bytes.insert(bytes.end(), field_bytes.begin(), field_bytes.end());
     }
     {
@@ -387,6 +448,11 @@ class packet_ct {
       header.from_bytes(field_bytes);
       offset += 13;
     }
+    {
+      std::vector<std::uint8_t> field_bytes(bytes.begin() + static_cast<std::ptrdiff_t>(offset), bytes.begin() + static_cast<std::ptrdiff_t>(offset + 1));
+      status.from_bytes(field_bytes);
+      offset += 1;
+    }
     mode = decode_mode(bytes, offset);
     offset += 1;
     error_code = decode_error_code(bytes, offset);
@@ -400,6 +466,7 @@ class packet_ct {
   packet_ct clone() const {
     packet_ct cloned;
     cloned.header = header.clone();
+    cloned.status = status.clone();
     cloned.mode = mode;
     cloned.error_code = error_code;
     cloned.data1 = data1;

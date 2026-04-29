@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from enum import IntEnum
+
 FOO = 100000
 BAR = 0
 A = 3
@@ -243,6 +245,58 @@ class big_data_ct:
     def __repr__(self) -> str:
         return f"big_data_ct(value={self.value!r})"
 
+class status_enum_t(IntEnum):
+    OK = 0
+    ERROR = 1
+    TIMEOUT = 2
+    UNKNOWN = 3
+    INVALID = 4
+
+class status_ct:
+    WIDTH = 3
+    BYTE_COUNT = 1
+
+    def __init__(self, value: status_enum_t = status_enum_t.OK) -> None:
+        if not isinstance(value, status_enum_t):
+            raise TypeError("status_ct value must be status_enum_t")
+        self.value = value
+
+    def to_bytes(self) -> bytes:
+        return int(self.value).to_bytes(1, "big", signed=False)
+
+    @classmethod
+    def from_bytes(cls, data: bytes | bytearray) -> "status_ct":
+        if not isinstance(data, (bytes, bytearray)):
+            raise TypeError("status_ct.from_bytes expects bytes or bytearray")
+        raw = bytes(data)
+        if len(raw) != 1:
+            raise ValueError("status_ct.from_bytes size mismatch")
+        raw_int = int.from_bytes(raw, "big", signed=False) & 7
+        try:
+            enum_val = status_enum_t(raw_int)
+        except ValueError:
+            raise ValueError("status_ct.from_bytes unknown enum value")
+        return cls(enum_val)
+
+    def clone(self) -> "status_ct":
+        return type(self)(self.value)
+
+    def __int__(self) -> int:
+        return int(self.value)
+
+    def __index__(self) -> int:
+        return int(self.value)
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, type(self)):
+            return self.value == other.value
+        if isinstance(other, int):
+            return int(self.value) == other
+        return NotImplemented
+
+    def __repr__(self) -> str:
+        return f"status_ct(value={self.value!r})"
+
 class flags_ct:
     WIDTH: int = 3
     BYTE_COUNT: int = 1
@@ -383,9 +437,10 @@ class header_ct:
 
 @dataclass
 class packet_ct:
-    WIDTH = 153
-    BYTE_COUNT = 23
+    WIDTH = 156
+    BYTE_COUNT = 24
     header: header_ct | None = field(default_factory=header_ct)
+    status: status_ct = field(default_factory=status_ct)
     mode: int = 0
     error_code: int = 0
     data1: int = 0
@@ -394,6 +449,8 @@ class packet_ct:
     def __setattr__(self, name: str, value: object) -> None:
         if name == "header":
             value = self._coerce_header(value)
+        elif name == "status":
+            value = self._coerce_status(value)
         elif name == "mode":
             value = self._coerce_mode(value)
         elif name == "error_code":
@@ -411,6 +468,12 @@ class packet_ct:
         if isinstance(value, header_ct):
             return value
         raise TypeError("packet_ct.header must be header_ct or None")
+
+    @staticmethod
+    def _coerce_status(value: object) -> status_ct:
+        if isinstance(value, status_ct):
+            return value
+        raise TypeError("packet_ct.status must be status_ct")
 
     @staticmethod
     def _coerce_mode(value: object) -> int:
@@ -449,6 +512,7 @@ class packet_ct:
         if self.header is None:
             raise ValueError("header cannot be None during packing")
         result.extend(self.header.to_bytes())
+        result.extend(self.status.to_bytes())
         _packed_mode = self.mode & 3
         result.extend(_packed_mode.to_bytes(1, "big", signed=False))
         _packed_error_code = self.error_code & 7
@@ -470,6 +534,8 @@ class packet_ct:
         offset = 0
         obj.header = header_ct.from_bytes(raw[offset:offset + 13])
         offset += 13
+        obj.status = status_ct.from_bytes(raw[offset:offset + 1])
+        offset += 1
         obj.mode = int.from_bytes(raw[offset:offset + 1], "big", signed=False) & 3
         offset += 1
         obj.error_code = int.from_bytes(raw[offset:offset + 1], "big", signed=False) & 7
