@@ -16,6 +16,9 @@ C = ((A << 2) | 1)
 D = (-A)
 E = (~A)
 W = 13
+F = 3
+G = 0x0C
+H = 0xC
 
 class addr_ct:
     WIDTH = 13
@@ -495,7 +498,7 @@ class packet_ct:
     def _coerce_data1(value: object) -> int:
         if not isinstance(value, int):
             raise TypeError("packet_ct.data1 must be int")
-        if value < 0 or value > 4294967295:
+        if value < -2147483648 or value > 2147483647:
             raise ValueError("packet_ct.data1 value out of range")
         return value
 
@@ -517,7 +520,10 @@ class packet_ct:
         result.extend(_packed_mode.to_bytes(1, "big", signed=False))
         _packed_error_code = self.error_code & 7
         result.extend(_packed_error_code.to_bytes(1, "big", signed=False))
-        _packed_data1 = self.data1 & 4294967295
+        _mask_data1 = 4294967295
+        _packed_data1 = self.data1 & _mask_data1
+        if self.data1 < 0:
+            _packed_data1 |= ((1 << 32) - 1) ^ _mask_data1
         result.extend(_packed_data1.to_bytes(4, "big", signed=False))
         _packed_data2 = self.data2 & 4294967295
         result.extend(_packed_data2.to_bytes(4, "big", signed=False))
@@ -540,7 +546,14 @@ class packet_ct:
         offset += 1
         obj.error_code = int.from_bytes(raw[offset:offset + 1], "big", signed=False) & 7
         offset += 1
-        obj.data1 = int.from_bytes(raw[offset:offset + 4], "big", signed=False) & 4294967295
+        _raw_int_data1 = int.from_bytes(raw[offset:offset + 4], "big", signed=False)
+        _data_data1 = _raw_int_data1 & 4294967295
+        _padding_data1 = _raw_int_data1 >> 32
+        _sign_bit_data1 = (_data_data1 >> 31) & 1
+        _expected_padding_data1 = ((1 << 0) - 1) if _sign_bit_data1 else 0
+        if _padding_data1 != _expected_padding_data1:
+            raise ValueError("packet_ct.from_bytes signed padding mismatch for data1")
+        obj.data1 = _data_data1 - 4294967296 if (_data_data1 & 2147483648) else _data_data1
         offset += 4
         obj.data2 = int.from_bytes(raw[offset:offset + 4], "big", signed=False) & 4294967295
         offset += 4

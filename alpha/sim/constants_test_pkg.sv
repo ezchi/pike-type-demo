@@ -512,7 +512,7 @@ package constants_test_pkg;
     status_ct status;
     rand logic [1:0] mode;
     rand bit [2:0] error_code;
-    rand logic [31:0] data1;
+    rand logic signed [31:0] data1;
     rand logic [31:0] data2;
   
     function new();

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from alpha.piketype.foo_types import byte_ct
+from alpha.py.foo_types import byte_ct
 
 @dataclass
 class bar_ct:

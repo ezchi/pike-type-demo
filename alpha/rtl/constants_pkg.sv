@@ -12,6 +12,9 @@ package constants_pkg;
   localparam int D = (-A);
   localparam int E = (~A);
   localparam int W = 32'sd13;
+  localparam logic [4:0] F = 5'd3;
+  localparam logic [4:0] G = 5'h0C;
+  localparam logic [3:0] H = 4'hC;
 
   localparam int LP_ADDR_WIDTH = W;
   localparam int LP_ADDR_BYTE_COUNT = 2;
@@ -36,7 +39,7 @@ package constants_pkg;
   endfunction
 
   function automatic mask_t unpack_mask(logic [LP_MASK_WIDTH-1:0] a);
-    return a;
+    return signed'(a);
   endfunction
 
   localparam int LP_FLAG_WIDTH = 1;
@@ -71,7 +74,7 @@ package constants_pkg;
   typedef enum logic [LP_STATUS_WIDTH-1:0] {OK = 0, ERROR = 1, TIMEOUT = 2, UNKNOWN = 3, INVALID = 4} status_t;
 
   function automatic logic [LP_STATUS_WIDTH-1:0] pack_status(status_t a);
-    return logic'(a);
+    return LP_STATUS_WIDTH'(a);
   endfunction
 
   function automatic status_t unpack_status(logic [LP_STATUS_WIDTH-1:0] a);
@@ -120,17 +123,11 @@ package constants_pkg;
 
   function automatic header_t unpack_header(logic [LP_HEADER_WIDTH-1:0] a);
     header_t result;
-    int unsigned offset;
     result = '0;
-    offset = 0;
-    result.status = unpack_flags(a[offset +: LP_FLAGS_WIDTH]);
-    offset += LP_FLAGS_WIDTH;
-    result.data = unpack_big_data(a[offset +: LP_BIG_DATA_WIDTH]);
-    offset += LP_BIG_DATA_WIDTH;
-    result.enable = unpack_flag(a[offset +: LP_FLAG_WIDTH]);
-    offset += LP_FLAG_WIDTH;
-    result.addr = unpack_addr(a[offset +: LP_ADDR_WIDTH]);
-    offset += LP_ADDR_WIDTH;
+    result.status = unpack_flags(a[2:0]);
+    result.data = unpack_big_data(a[69:3]);
+    result.enable = unpack_flag(a[70:70]);
+    result.addr = unpack_addr(a[83:71]);
     return result;
   endfunction
 
@@ -145,7 +142,7 @@ package constants_pkg;
     logic [1:0] mode;
     logic [4:0] error_code_pad;
     bit [2:0] error_code;
-    logic [31:0] data1;
+    logic signed [31:0] data1;
     logic [31:0] data2;
   } packet_t;
 
@@ -155,21 +152,13 @@ package constants_pkg;
 
   function automatic packet_t unpack_packet(logic [LP_PACKET_WIDTH-1:0] a);
     packet_t result;
-    int unsigned offset;
     result = '0;
-    offset = 0;
-    result.data2 = a[offset +: 32];
-    offset += 32;
-    result.data1 = a[offset +: 32];
-    offset += 32;
-    result.error_code = a[offset +: 3];
-    offset += 3;
-    result.mode = a[offset +: 2];
-    offset += 2;
-    result.status = unpack_status(a[offset +: LP_STATUS_WIDTH]);
-    offset += LP_STATUS_WIDTH;
-    result.header = unpack_header(a[offset +: LP_HEADER_WIDTH]);
-    offset += LP_HEADER_WIDTH;
+    result.data2 = a[31:0];
+    result.data1 = signed'(a[63:32]);
+    result.error_code = a[66:64];
+    result.mode = a[68:67];
+    result.status = unpack_status(a[71:69]);
+    result.header = unpack_header(a[155:72]);
     return result;
   endfunction
 endpackage

@@ -20,6 +20,9 @@ constexpr std::int32_t C = ((A << 2) | 1);
 constexpr std::int32_t D = (-A);
 constexpr std::int32_t E = (~A);
 constexpr std::int32_t W = 13;
+constexpr std::uint8_t F = 3;
+constexpr std::uint8_t G = 0x0C;
+constexpr std::uint8_t H = 0xC;
 
 class addr_ct {
  public:
@@ -403,7 +406,7 @@ class packet_ct {
   status_ct status{};
   std::uint8_t mode = 0;
   std::uint8_t error_code = 0;
-  std::uint32_t data1 = 0;
+  std::int32_t data1 = 0;
   std::uint32_t data2 = 0;
 
   packet_ct() = default;
@@ -531,27 +534,35 @@ class packet_ct {
     return value_in;
   }
 
-  static std::vector<std::uint8_t> encode_data1(std::uint32_t v) {
+  static std::vector<std::uint8_t> encode_data1(std::int32_t v) {
     validate_data1(v);
+    constexpr std::uint64_t MASK = 4294967295U;
+    std::uint64_t bits = static_cast<std::uint64_t>(v) & MASK;
     std::vector<std::uint8_t> b(4, 0U);
-    std::uint64_t bits = static_cast<std::uint64_t>(v);
     for (std::size_t i = 0; i < 4; ++i) {
       b[4 - 1 - i] = static_cast<std::uint8_t>((bits >> (8U * i)) & 0xFFU);
     }
     return b;
   }
 
-  static std::uint32_t decode_data1(const std::vector<std::uint8_t>& bytes, std::size_t offset) {
+  static std::int32_t decode_data1(const std::vector<std::uint8_t>& bytes, std::size_t offset) {
     std::uint64_t bits = 0;
     for (std::size_t i = 0; i < 4; ++i) {
       bits = (bits << 8U) | bytes[offset + i];
     }
-    return validate_data1(static_cast<std::uint32_t>(bits));
+    constexpr std::uint64_t MASK = 4294967295U;
+    bits &= MASK;
+    std::int64_t signed_value = static_cast<std::int64_t>(bits);
+    if ((bits & 2147483648U) != 0U) {
+      signed_value -= static_cast<std::int64_t>(4294967296ULL);
+    }
+    return validate_data1(static_cast<std::int32_t>(signed_value));
   }
 
-  static std::uint32_t validate_data1(std::uint32_t value_in) {
-    constexpr std::uint32_t MAX_VALUE = static_cast<std::uint32_t>(4294967295U);
-    if (value_in > MAX_VALUE) {
+  static std::int32_t validate_data1(std::int32_t value_in) {
+    constexpr std::int32_t MIN_VALUE = static_cast<std::int32_t>(-2147483648);
+    constexpr std::int32_t MAX_VALUE = static_cast<std::int32_t>(2147483647);
+    if (value_in < MIN_VALUE || value_in > MAX_VALUE) {
       throw std::out_of_range("value out of range");
     }
     return value_in;
