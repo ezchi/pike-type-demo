@@ -10,8 +10,8 @@
         }
       ],
       "generated_outputs": {
-        "cpp": "cpp/alpha/bar_types.hpp",
-        "py": "py/alpha/bar_types.py",
+        "cpp": "include/alpha/bar_types.hpp",
+        "py": "python_lib/alpha/bar_types.py",
         "sv": "alpha/rtl/bar_pkg.sv",
         "sv_test": "alpha/sim/bar_test_pkg.sv"
       },
@@ -135,8 +135,8 @@
       ],
       "dependencies": [],
       "generated_outputs": {
-        "cpp": "cpp/alpha/constants_types.hpp",
-        "py": "py/alpha/constants_types.py",
+        "cpp": "include/alpha/constants_types.hpp",
+        "py": "python_lib/alpha/constants_types.py",
         "sv": "alpha/rtl/constants_pkg.sv",
         "sv_test": "alpha/sim/constants_test_pkg.sv"
       },
@@ -311,8 +311,8 @@
       "constants": [],
       "dependencies": [],
       "generated_outputs": {
-        "cpp": "cpp/alpha/foo_types.hpp",
-        "py": "py/alpha/foo_types.py",
+        "cpp": "include/alpha/foo_types.hpp",
+        "py": "python_lib/alpha/foo_types.py",
         "sv": "alpha/rtl/foo_pkg.sv",
         "sv_test": "alpha/sim/foo_test_pkg.sv"
       },

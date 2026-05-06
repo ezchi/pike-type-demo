@@ -177,7 +177,7 @@ wheels = [
 
 [[package]]
 name = "pike-type"
-version = "0.7.0"
+version = "1.0.0"
 source = { editable = "../pike-type" }
 dependencies = [
     { name = "jinja2" },
