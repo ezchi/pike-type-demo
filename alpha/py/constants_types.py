@@ -34,12 +34,19 @@ class addr_ct:
             raise ValueError("addr_ct value out of range")
         self.value = value
 
-    def _to_packed_int(self) -> int:
+    def pack(self) -> int:
         return self.value
 
     @classmethod
-    def _from_packed_int(cls, packed: int) -> "addr_ct":
-        return cls(packed)
+    def unpack(cls, packed: int) -> "addr_ct":
+        return cls(packed & cls.MAX_VALUE)
+
+    def to_lv(self) -> int:
+        return int.from_bytes(self.to_bytes(), "big", signed=False)
+
+    @classmethod
+    def from_lv(cls, value: int) -> "addr_ct":
+        return cls.from_bytes((value & ((1 << (cls.BYTE_COUNT * 8)) - 1)).to_bytes(cls.BYTE_COUNT, "big", signed=False))
 
     def to_bytes(self) -> bytes:
         return self.value.to_bytes(self.BYTE_COUNT, "big", signed=False)
@@ -56,6 +63,12 @@ class addr_ct:
 
     def clone(self) -> "addr_ct":
         return type(self)(self.value)
+
+    def compare(self, other: object, msg: str = "") -> None:
+        assert isinstance(other, addr_ct), "Expected addr_ct, got " + str(type(other))
+        if self.value != other.value:
+            prefix = msg + ": " if msg else ""
+            raise AssertionError(prefix + repr(self) + " != " + repr(other))
 
     def __int__(self) -> int:
         return self.value
@@ -89,14 +102,21 @@ class mask_ct:
             raise ValueError("mask_ct value out of range")
         self.value = value
 
-    def _to_packed_int(self) -> int:
+    def pack(self) -> int:
         return self.value & self.MASK
 
     @classmethod
-    def _from_packed_int(cls, packed: int) -> "mask_ct":
+    def unpack(cls, packed: int) -> "mask_ct":
         value = packed & cls.MASK
         signed_value = value - (1 << cls.WIDTH) if (value & cls.SIGN_BIT) else value
         return cls(signed_value)
+
+    def to_lv(self) -> int:
+        return int.from_bytes(self.to_bytes(), "big", signed=False)
+
+    @classmethod
+    def from_lv(cls, value: int) -> "mask_ct":
+        return cls.from_bytes((value & ((1 << (cls.BYTE_COUNT * 8)) - 1)).to_bytes(cls.BYTE_COUNT, "big", signed=False))
 
     def to_bytes(self) -> bytes:
         mask = self.MASK
@@ -119,10 +139,16 @@ class mask_ct:
         expected_padding = ((1 << 0) - 1) if sign_bit else 0
         if padding != expected_padding:
             raise ValueError("mask_ct.from_bytes signed padding mismatch")
-        return cls._from_packed_int(data_bits)
+        return cls.unpack(data_bits)
 
     def clone(self) -> "mask_ct":
         return type(self)(self.value)
+
+    def compare(self, other: object, msg: str = "") -> None:
+        assert isinstance(other, mask_ct), "Expected mask_ct, got " + str(type(other))
+        if self.value != other.value:
+            prefix = msg + ": " if msg else ""
+            raise AssertionError(prefix + repr(self) + " != " + repr(other))
 
     def __int__(self) -> int:
         return self.value
@@ -154,12 +180,19 @@ class flag_ct:
             raise ValueError("flag_ct value out of range")
         self.value = value
 
-    def _to_packed_int(self) -> int:
+    def pack(self) -> int:
         return self.value
 
     @classmethod
-    def _from_packed_int(cls, packed: int) -> "flag_ct":
-        return cls(packed)
+    def unpack(cls, packed: int) -> "flag_ct":
+        return cls(packed & cls.MAX_VALUE)
+
+    def to_lv(self) -> int:
+        return int.from_bytes(self.to_bytes(), "big", signed=False)
+
+    @classmethod
+    def from_lv(cls, value: int) -> "flag_ct":
+        return cls.from_bytes((value & ((1 << (cls.BYTE_COUNT * 8)) - 1)).to_bytes(cls.BYTE_COUNT, "big", signed=False))
 
     def to_bytes(self) -> bytes:
         return self.value.to_bytes(self.BYTE_COUNT, "big", signed=False)
@@ -176,6 +209,12 @@ class flag_ct:
 
     def clone(self) -> "flag_ct":
         return type(self)(self.value)
+
+    def compare(self, other: object, msg: str = "") -> None:
+        assert isinstance(other, flag_ct), "Expected flag_ct, got " + str(type(other))
+        if self.value != other.value:
+            prefix = msg + ": " if msg else ""
+            raise AssertionError(prefix + repr(self) + " != " + repr(other))
 
     def __int__(self) -> int:
         return self.value
@@ -214,12 +253,19 @@ class big_data_ct:
             raise ValueError("big_data_ct value size mismatch")
         self.value = raw
 
-    def _to_packed_int(self) -> int:
+    def pack(self) -> int:
         return int.from_bytes(self.value, "big", signed=False)
 
     @classmethod
-    def _from_packed_int(cls, packed: int) -> "big_data_ct":
-        return cls(packed.to_bytes(cls.BYTE_COUNT, "big", signed=False))
+    def unpack(cls, packed: int) -> "big_data_ct":
+        return cls((packed & cls.MAX_VALUE).to_bytes(cls.BYTE_COUNT, "big", signed=False))
+
+    def to_lv(self) -> int:
+        return int.from_bytes(self.to_bytes(), "big", signed=False)
+
+    @classmethod
+    def from_lv(cls, value: int) -> "big_data_ct":
+        return cls.from_bytes((value & ((1 << (cls.BYTE_COUNT * 8)) - 1)).to_bytes(cls.BYTE_COUNT, "big", signed=False))
 
     def to_bytes(self) -> bytes:
         return self.value
@@ -237,6 +283,12 @@ class big_data_ct:
 
     def clone(self) -> "big_data_ct":
         return type(self)(self.value)
+
+    def compare(self, other: object, msg: str = "") -> None:
+        assert isinstance(other, big_data_ct), "Expected big_data_ct, got " + str(type(other))
+        if self.value != other.value:
+            prefix = msg + ": " if msg else ""
+            raise AssertionError(prefix + repr(self) + " != " + repr(other))
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, type(self)):
@@ -264,6 +316,25 @@ class status_ct:
             raise TypeError("status_ct value must be status_enum_t")
         self.value = value
 
+    def pack(self) -> int:
+        return int(self.value)
+
+    @classmethod
+    def unpack(cls, packed: int) -> "status_ct":
+        masked = packed & 7
+        try:
+            enum_val = status_enum_t(masked)
+        except ValueError:
+            raise ValueError("status_ct.unpack unknown enum value")
+        return cls(enum_val)
+
+    def to_lv(self) -> int:
+        return int.from_bytes(self.to_bytes(), "big", signed=False)
+
+    @classmethod
+    def from_lv(cls, value: int) -> "status_ct":
+        return cls.from_bytes((value & ((1 << (cls.BYTE_COUNT * 8)) - 1)).to_bytes(cls.BYTE_COUNT, "big", signed=False))
+
     def to_bytes(self) -> bytes:
         return int(self.value).to_bytes(1, "big", signed=False)
 
@@ -283,6 +354,12 @@ class status_ct:
 
     def clone(self) -> "status_ct":
         return type(self)(self.value)
+
+    def compare(self, other: object, msg: str = "") -> None:
+        assert isinstance(other, status_ct), "Expected status_ct, got " + str(type(other))
+        if self.value != other.value:
+            prefix = msg + ": " if msg else ""
+            raise AssertionError(prefix + repr(self) + " != " + repr(other))
 
     def __int__(self) -> int:
         return int(self.value)
@@ -340,6 +417,22 @@ class flags_ct:
         else:
             self._value &= ~32
 
+    def pack(self) -> int:
+        return (self._value & 224) >> 5
+
+    @classmethod
+    def unpack(cls, packed: int) -> "flags_ct":
+        obj = cls()
+        obj._value = (packed & 7) << 5
+        return obj
+
+    def to_lv(self) -> int:
+        return int.from_bytes(self.to_bytes(), "big", signed=False)
+
+    @classmethod
+    def from_lv(cls, value: int) -> "flags_ct":
+        return cls.from_bytes((value & ((1 << (cls.BYTE_COUNT * 8)) - 1)).to_bytes(cls.BYTE_COUNT, "big", signed=False))
+
     def to_bytes(self) -> bytes:
         return (self._value & 224).to_bytes(1, "big")
 
@@ -358,6 +451,23 @@ class flags_ct:
         obj = self.__class__()
         obj._value = self._value & 224
         return obj
+
+    def compare(self, other: object, msg: str = "") -> None:
+        assert isinstance(other, flags_ct), "Expected flags_ct, got " + str(type(other))
+        diffs = []
+        if self.invalid_data != other.invalid_data:
+            diffs.append("invalid_data: expected {}, got {}".format(self.invalid_data, other.invalid_data))
+        if self.timeout != other.timeout:
+            diffs.append("timeout: expected {}, got {}".format(self.timeout, other.timeout))
+        if self.overflow != other.overflow:
+            diffs.append("overflow: expected {}, got {}".format(self.overflow, other.overflow))
+        if diffs:
+            prefix = msg + ": " if msg else ""
+            raise AssertionError(prefix + repr(self) + " != " + repr(other) + " — " + ", ".join(diffs))
+
+    def __repr__(self) -> str:
+        parts = ["invalid_data=" + repr(self.invalid_data), "timeout=" + repr(self.timeout), "overflow=" + repr(self.overflow)]
+        return "flags_ct(" + ", ".join(parts) + ")"
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, flags_ct):
@@ -408,6 +518,30 @@ class header_ct:
             return value
         raise TypeError("header_ct.status must be flags_ct")
 
+    def pack(self) -> int:
+        result = 0
+        result = (result << 13) | self.addr.pack()
+        result = (result << 1) | self.enable.pack()
+        result = (result << 67) | self.data.pack()
+        result = (result << 3) | self.status.pack()
+        return result
+
+    @classmethod
+    def unpack(cls, packed: int) -> "header_ct":
+        obj = cls()
+        obj.addr = addr_ct.unpack((packed >> 71) & 8191)
+        obj.enable = flag_ct.unpack((packed >> 70) & 1)
+        obj.data = big_data_ct.unpack((packed >> 3) & 147573952589676412927)
+        obj.status = flags_ct.unpack((packed >> 0) & 7)
+        return obj
+
+    def to_lv(self) -> int:
+        return int.from_bytes(self.to_bytes(), "big", signed=False)
+
+    @classmethod
+    def from_lv(cls, value: int) -> "header_ct":
+        return cls.from_bytes((value & ((1 << (cls.BYTE_COUNT * 8)) - 1)).to_bytes(cls.BYTE_COUNT, "big", signed=False))
+
     def to_bytes(self) -> bytes:
         result = bytearray()
         result.extend(self.addr.to_bytes())
@@ -437,6 +571,21 @@ class header_ct:
 
     def clone(self) -> "header_ct":
         return type(self).from_bytes(self.to_bytes())
+
+    def compare(self, other: object, msg: str = "") -> None:
+        assert isinstance(other, header_ct), "Expected header_ct, got " + str(type(other))
+        diffs = []
+        if self.addr != other.addr:
+            diffs.append("addr: expected {!r}, got {!r}".format(self.addr, other.addr))
+        if self.enable != other.enable:
+            diffs.append("enable: expected {!r}, got {!r}".format(self.enable, other.enable))
+        if self.data != other.data:
+            diffs.append("data: expected {!r}, got {!r}".format(self.data, other.data))
+        if self.status != other.status:
+            diffs.append("status: expected {!r}, got {!r}".format(self.status, other.status))
+        if diffs:
+            prefix = msg + ": " if msg else ""
+            raise AssertionError(prefix + repr(self) + " != " + repr(other) + " — " + ", ".join(diffs))
 
 @dataclass
 class packet_ct:
@@ -510,6 +659,37 @@ class packet_ct:
             raise ValueError("packet_ct.data2 value out of range")
         return value
 
+    def pack(self) -> int:
+        result = 0
+        if self.header is None:
+            raise ValueError("header cannot be None during packing")
+        result = (result << 84) | self.header.pack()
+        result = (result << 3) | self.status.pack()
+        result = (result << 2) | (self.mode & 3)
+        result = (result << 3) | (self.error_code & 7)
+        result = (result << 32) | (self.data1 & 4294967295)
+        result = (result << 32) | (self.data2 & 4294967295)
+        return result
+
+    @classmethod
+    def unpack(cls, packed: int) -> "packet_ct":
+        obj = cls()
+        obj.header = header_ct.unpack((packed >> 72) & 19342813113834066795298815)
+        obj.status = status_ct.unpack((packed >> 69) & 7)
+        obj.mode = (packed >> 67) & 3
+        obj.error_code = (packed >> 64) & 7
+        _slice_data1 = (packed >> 32) & 4294967295
+        obj.data1 = _slice_data1 - 4294967296 if (_slice_data1 & 2147483648) else _slice_data1
+        obj.data2 = (packed >> 0) & 4294967295
+        return obj
+
+    def to_lv(self) -> int:
+        return int.from_bytes(self.to_bytes(), "big", signed=False)
+
+    @classmethod
+    def from_lv(cls, value: int) -> "packet_ct":
+        return cls.from_bytes((value & ((1 << (cls.BYTE_COUNT * 8)) - 1)).to_bytes(cls.BYTE_COUNT, "big", signed=False))
+
     def to_bytes(self) -> bytes:
         result = bytearray()
         if self.header is None:
@@ -561,3 +741,25 @@ class packet_ct:
 
     def clone(self) -> "packet_ct":
         return type(self).from_bytes(self.to_bytes())
+
+    def compare(self, other: object, msg: str = "") -> None:
+        assert isinstance(other, packet_ct), "Expected packet_ct, got " + str(type(other))
+        diffs = []
+        if self.header is None or other.header is None:
+            if self.header is not other.header:
+                diffs.append("header: expected {!r}, got {!r}".format(self.header, other.header))
+        elif self.header != other.header:
+            diffs.append("header: expected {!r}, got {!r}".format(self.header, other.header))
+        if self.status != other.status:
+            diffs.append("status: expected {!r}, got {!r}".format(self.status, other.status))
+        if self.mode != other.mode:
+            diffs.append("mode: expected 0x{:01x}, got 0x{:01x}".format(self.mode, other.mode))
+        if self.error_code != other.error_code:
+            diffs.append("error_code: expected 0x{:01x}, got 0x{:01x}".format(self.error_code, other.error_code))
+        if self.data1 != other.data1:
+            diffs.append("data1: expected {}, got {}".format(self.data1, other.data1))
+        if self.data2 != other.data2:
+            diffs.append("data2: expected 0x{:08x}, got 0x{:08x}".format(self.data2, other.data2))
+        if diffs:
+            prefix = msg + ": " if msg else ""
+            raise AssertionError(prefix + repr(self) + " != " + repr(other) + " — " + ", ".join(diffs))

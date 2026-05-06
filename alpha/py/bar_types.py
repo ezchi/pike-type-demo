@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from alpha.py.foo_types import byte_ct
+from .foo_types import byte_ct
 
 @dataclass
 class bar_ct:
@@ -34,6 +34,26 @@ class bar_ct:
             return value
         return byte_ct(value)
 
+    def pack(self) -> int:
+        result = 0
+        result = (result << 8) | self.field1.pack()
+        result = (result << 8) | self.field2.pack()
+        return result
+
+    @classmethod
+    def unpack(cls, packed: int) -> "bar_ct":
+        obj = cls()
+        obj.field1 = byte_ct.unpack((packed >> 8) & 255)
+        obj.field2 = byte_ct.unpack((packed >> 0) & 255)
+        return obj
+
+    def to_lv(self) -> int:
+        return int.from_bytes(self.to_bytes(), "big", signed=False)
+
+    @classmethod
+    def from_lv(cls, value: int) -> "bar_ct":
+        return cls.from_bytes((value & ((1 << (cls.BYTE_COUNT * 8)) - 1)).to_bytes(cls.BYTE_COUNT, "big", signed=False))
+
     def to_bytes(self) -> bytes:
         result = bytearray()
         result.extend(self.field1.to_bytes())
@@ -57,3 +77,14 @@ class bar_ct:
 
     def clone(self) -> "bar_ct":
         return type(self).from_bytes(self.to_bytes())
+
+    def compare(self, other: object, msg: str = "") -> None:
+        assert isinstance(other, bar_ct), "Expected bar_ct, got " + str(type(other))
+        diffs = []
+        if self.field1 != other.field1:
+            diffs.append("field1: expected {!r}, got {!r}".format(self.field1, other.field1))
+        if self.field2 != other.field2:
+            diffs.append("field2: expected {!r}, got {!r}".format(self.field2, other.field2))
+        if diffs:
+            prefix = msg + ": " if msg else ""
+            raise AssertionError(prefix + repr(self) + " != " + repr(other) + " — " + ", ".join(diffs))
