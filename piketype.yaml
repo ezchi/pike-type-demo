@@ -1,0 +1,46 @@
+# piketype project configuration.
+# Reference: docs/piketype-yaml.md
+#
+# Every key below is shown with its default value. Remove any key you
+# don't override to keep the file short. Unknown keys cause a hard
+# error so typos surface immediately.
+
+frontend:
+  # Where DSL files live. Walked recursively for <sub>/piketype/<base>.py.
+  # Default: this directory (project root).
+  piketype_root: .
+
+  # Where the build writes IR cache, _index.json, and diagnostics.json.
+  # Default: <project_root>/.piketype-cache
+  ir_cache: .piketype-cache
+
+  # Glob patterns to skip during discovery (reserved; currently unused).
+  exclude: []
+
+backends:
+  # SystemVerilog synthesis package. With out_layout=suffix, the role
+  # directory sits next to the source: <sub>/rtl/<base>_pkg.sv.
+  sv:
+    out: rtl
+    out_layout: suffix      # 'suffix': <sub>/<out>/<file>; 'prefix': <out>/<sub>/<file>
+    language_id: false      # if true, insert <backend_id>/ before the file
+
+  # SystemVerilog test/verification package: <sub>/sim/<base>_test_pkg.sv
+  sim:
+    out: sim
+    out_layout: suffix
+    language_id: false
+
+  # Python wrapper module. With out_layout=prefix, the package root sits
+  # above the source tree: py/<sub>/<base>_types.py. Add <out> to
+  # PYTHONPATH at runtime to import as <sub>.<base>_types.
+  py:
+    out: py
+    out_layout: prefix
+    language_id: false
+
+  # C++ header: cpp/<sub>/<base>_types.hpp
+  cpp:
+    out: cpp
+    out_layout: prefix
+    language_id: false
